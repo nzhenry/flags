@@ -3,7 +3,8 @@ var router = express.Router();
 
 /* GET home page. */
 router.get('/', function(req, res, next) {
-  res.render('index', { title: 'Express' });
+  if(req.isAuthenticated()) res.render('index', { title: 'Express', user: req.user });
+  else res.redirect('/login');
 });
 
 module.exports = router;
