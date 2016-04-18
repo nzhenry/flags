@@ -11,46 +11,46 @@ remove-unused-images:
 remove-containers:
 	@echo
 	@echo Removing old docker containers
-	@docker rm starter-test || true
-	@docker rm starter-tmp || true
-	@docker rm starter-selenium-firefox || true
+	@docker rm flags-test || true
+	@docker rm flags-tmp || true
+	@docker rm flags-selenium-firefox || true
 build-image:
 	@echo
 	@echo Building new docker image
 	@rm -rf artifacts || true
-	docker build -t starter .
+	docker build -t flags .
 run-tests:
 	@echo
 	@echo Starting up app container for testing
-	docker run -d --name starter-tmp starter
+	docker run -d --name flags-tmp flags
 	@echo
 	@echo Starting up Selenium standalone server
-	docker run -d --name starter-selenium-firefox --link starter-tmp selenium/standalone-firefox
+	docker run -d --name flags-selenium-firefox --link flags-tmp selenium/standalone-firefox
 	@echo
 	@echo Starting up test harness
-	docker run -dit --name starter-test --link starter-selenium-firefox starter bash
+	docker run -dit --name flags-test --link flags-selenium-firefox flags bash
 	@echo
 	@echo Running tests
-	@docker exec starter-test npm test || true
-	@docker cp starter-test:/usr/src/app/artifacts . || true
+	@docker exec flags-test npm test || true
+	@docker cp flags-test:/usr/src/app/artifacts . || true
 stop-containers:
 	@echo
 	@echo Stopping test containers
-	@docker stop starter-test || true
-	@docker exec starter-tmp bash -c 'kill $$(pidof gulp)' || true
-	@docker stop starter-selenium-firefox || true
+	@docker stop flags-test || true
+	@docker exec flags-tmp bash -c 'kill $$(pidof gulp)' || true
+	@docker stop flags-selenium-firefox || true
 deploy:
 	@echo
 	@echo Deploying app
-	@docker exec starter bash -c 'kill $$(pidof gulp)' || true
+	@docker exec flags bash -c 'kill $$(pidof gulp)' || true
 	@sleep 1
-	@docker rm starter || true
-	docker run -d --name starter -e VIRTUAL_HOST=starter.livehen.com -e VIRTUAL_PORT=3000 starter
+	@docker rm flags || true
+	docker run -d --name flags -e VIRTUAL_HOST=flags.livehen.com -e VIRTUAL_PORT=3000 flags
 deploy-dev:
 	@echo
 	@echo Deploying app
-	@docker exec starter bash -c 'kill $$(pidof gulp)' || true
+	@docker exec flags bash -c 'kill $$(pidof gulp)' || true
 	@sleep 1
-	@docker rm starter || true
-	docker run -d --name starter -p 3000:3000 starter
+	@docker rm flags || true
+	docker run -d --name flags -p 3000:3000 flags
 

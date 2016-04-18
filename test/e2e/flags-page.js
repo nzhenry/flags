@@ -3,18 +3,20 @@ var webdriver = require('../webdriver');
 
 describe('flags page', () => {
 
-  before(() => {
+  before(function() {
     this.timeout(9999);
     return page = webdriver.init().url('/');
   });
 
-  it('should have the correct page title', () =>
+  it('should have the correct page title', () => {
     page.getTitle()
       .then(title => assert.equal(title, 'flags'));
-  );
+  });
   
   describe('if not logged in', () => {
-    it('should have a login button');
+    it('should have a login button', () => {
+      
+    });
     it('should have a signup button');
   });
   
@@ -76,6 +78,6 @@ describe('flags page', () => {
   describe('when the user scrolls to the bottom of the page', () => {
     it('should load more flags');
   });
-
-  after(page.end);
+  
+  after(() => page.end());
 });

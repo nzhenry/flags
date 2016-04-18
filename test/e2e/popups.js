@@ -79,6 +79,7 @@ describe('"reset password" popup', () => {
         it('should show a failure message');
       });
     });
+  });
 });
 
 describe('signup popup', () => {
