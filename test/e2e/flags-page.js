@@ -1,4 +1,7 @@
-var assert = require('assert');
+var chai = require("chai");
+var chaiAsPromised = require("chai-as-promised");
+chai.use(chaiAsPromised);
+var assert = chai.assert;
 var webdriver = require('../webdriver');
 
 describe('flags page', () => {
@@ -15,12 +18,25 @@ describe('flags page', () => {
   
   describe('if not logged in', () => {
     it('should have a login button', () => {
-      
+      return page.element('#loginButton');
+
     });
-    it('should have a signup button');
+    it('should have a signup button', () => {
+      return page.element('#signupButton');
+    });
   });
   
   describe('if logged in', () => {
+    before(() => {
+      
+    });
+    
+    it('should not have a login button', () => {
+      return assert.isRejected(page.element('#loginButton'));
+    });
+    it('should not have a signup button', () => {
+      return assert.isRejected(page.element('#signupButton'));
+    });
     it("should show the user's email address");
     it('should have a logout button');
   });

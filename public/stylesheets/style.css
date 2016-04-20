@@ -2,7 +2,18 @@ body {
   padding: 50px;
   font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
 }
-
 a {
   color: #00B7FF;
+}
+#loginButton {
+  margin-right: 5px;
+}
+.modalInput {
+  width: 100%;
+}
+.modal-dialog {
+  width: 400px;
+}
+.modal-footer {
+  text-align: center;
 }
