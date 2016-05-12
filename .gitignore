@@ -2,3 +2,7 @@ db
 node_modules
 db.conf.json
 artifacts
+*.log
+bower_components
+public/scripts/ext
+config.*.json

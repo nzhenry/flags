@@ -2,7 +2,7 @@ ci: remove-unused-images remove-containers build-image run-tests stop-containers
 
 cd: ci deploy
 
-cd-dev: ci deploy-dev
+dev: build-image deploy-dev
 
 remove-unused-images:
 	@echo
@@ -13,6 +13,7 @@ remove-containers:
 	@echo Removing old docker containers
 	@docker rm flags-test || true
 	@docker rm flags-tmp || true
+	@docker rm flagsql-test || true
 	@docker rm flags-selenium-firefox || true
 build-image:
 	@echo
@@ -20,15 +21,17 @@ build-image:
 	@rm -rf artifacts || true
 	docker build -t flags .
 run-tests:
+	@echo Starting up temporary database container for testing
+	cd postgres && $(MAKE) && cd ..
 	@echo
 	@echo Starting up app container for testing
-	docker run -d --name flags-tmp flags
+	docker run -d --name flags-tmp --link flagsql-test -e NODE_ENV=TEST flags
 	@echo
 	@echo Starting up Selenium standalone server
 	docker run -d --name flags-selenium-firefox --link flags-tmp selenium/standalone-firefox
 	@echo
 	@echo Starting up test harness
-	docker run -dit --name flags-test --link flags-selenium-firefox flags bash
+	docker run -dit --name flags-test --link flags-selenium-firefox -e NODE_ENV=TEST flags bash
 	@echo
 	@echo Running tests
 	@docker exec flags-test npm test || true
@@ -37,20 +40,19 @@ stop-containers:
 	@echo
 	@echo Stopping test containers
 	@docker stop flags-test || true
-	@docker exec flags-tmp bash -c 'kill $$(pidof gulp)' || true
+	@docker stop flags-tmp || true
+	@docker stop flagsql-test || true
 	@docker stop flags-selenium-firefox || true
 deploy:
 	@echo
 	@echo Deploying app
-	@docker exec flags bash -c 'kill $$(pidof gulp)' || true
-	@sleep 1
+	@docker stop flags || true
 	@docker rm flags || true
-	docker run -d --name flags -e VIRTUAL_HOST=flags.livehen.com -e VIRTUAL_PORT=3000 flags
+	docker run -d --name flags --link flagsql -e NODE_ENV=PROD -e VIRTUAL_HOST=flags.livehen.com -e VIRTUAL_PORT=3000 flags
 deploy-dev:
 	@echo
 	@echo Deploying app
-	@docker exec flags bash -c 'kill $$(pidof gulp)' || true
-	@sleep 1
+	@docker stop flags || true
 	@docker rm flags || true
-	docker run -d --name flags -p 3000:3000 flags
+	docker run --name flags --link flagsql -p 3000:3000 flags
 

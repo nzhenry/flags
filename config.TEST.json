@@ -1,0 +1,29 @@
+{
+  "seleniumHost": "flags-selenium-firefox",
+  "db": {
+    "host": "flagsql-test",
+    "port": 5432,
+    "database": "flags",
+    "user": "flags_app"
+  },
+  "db_admin": {
+    "host": "flagsql-test",
+    "port": 5432,
+    "database": "flags",
+    "user": "flags_admin"
+  },
+  "jwtSecret": "test_jwt_secret",
+  "site": "http://flags-tmp:3000",
+  "mailFrom": "\"Flag Test\" <test@flagtest.com>",
+  "smtpConfig": {
+    "host": "flags-mock-smtp",
+    "port": 587,
+    "requireTLS": false,
+    "auth": {
+      "user": "usr",
+      "pass": "pwd"
+    }
+  },
+  "recaptchaKey": "6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI",
+  "recaptchaSecret": "6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ4WifJWe"
+}

@@ -1,14 +1,20 @@
 var chai = require("chai");
 var chaiAsPromised = require("chai-as-promised");
-chai.use(chaiAsPromised);
 var assert = chai.assert;
 var webdriver = require('../webdriver');
+var uuid = require('node-uuid');
+
+chai.use(chaiAsPromised);
 
 describe('flags page', () => {
 
   before(function() {
     this.timeout(9999);
-    return page = webdriver.init().url('/');
+    page = webdriver.init().url('/');
+    page.waitForInvisible = function (sel,ms) {
+      return page.waitForVisible(sel,ms,true)
+    }
+    return page;
   });
 
   it('should have the correct page title', () => {
@@ -17,25 +23,40 @@ describe('flags page', () => {
   });
   
   describe('if not logged in', () => {
+    it('should not have a logout button', () => {
+      return assert.eventually.isFalse(page.isVisible('#logoutButton'));
+    });
     it('should have a login button', () => {
-      return page.element('#loginButton');
-
+      return assert.eventually.isTrue(page.isVisible('#loginButton'));
     });
     it('should have a signup button', () => {
-      return page.element('#signupButton');
+      return assert.eventually.isTrue(page.isVisible('#signupButton'));
     });
   });
   
   describe('if logged in', () => {
-    before(() => {
-      
+    before(function() {
+      this.timeout(5000);
+      return page.click('#signupButton')
+        .then(()=> page.waitForVisible('#emailInput'))
+        .then(()=> page.setValue('#emailInput',`${uuid.v4()}@test`))
+        .then(()=> page.setValue('#passwordInput','foobar'))
+        .then(f => page.frame(0))
+        .then(()=> page.click('#recaptcha-anchor'))
+        .then(()=> page.waitForExist('#recaptcha-anchor.recaptcha-checkbox-checked', 2000))
+        .then(f => page.frameParent())
+        .then(()=> page.click('#signupSubmit'))
+        .then(()=> page.waitForInvisible('#loginButton',1000));
     });
     
+    it('should have a logout button', () => {
+      return assert.eventually.isTrue(page.isVisible('#logoutButton'));
+    });
     it('should not have a login button', () => {
-      return assert.isRejected(page.element('#loginButton'));
+      return assert.eventually.isFalse(page.isVisible('#loginButton'));
     });
     it('should not have a signup button', () => {
-      return assert.isRejected(page.element('#signupButton'));
+      return assert.eventually.isFalse(page.isVisible('#signupButton'));
     });
     it("should show the user's email address");
     it('should have a logout button');

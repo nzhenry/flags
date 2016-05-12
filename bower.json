@@ -1,0 +1,13 @@
+{
+  "name": "flags",
+  "authors": [
+    "Henry Johnson <nzhenry@gmail.com>"
+  ],
+  "license": "MIT",
+  "homepage": "https://github.com/nzhenry/flags",
+  "private": true,
+  "dependencies": {
+    "angular-block-ui": "^0.2.2",
+    "angular-bootstrap": "^1.3.2"
+  }
+}

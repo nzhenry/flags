@@ -1,0 +1,31 @@
+{
+  "seleniumHost": "localhost",
+  "db": {
+    "host": "localhost",
+    "port": 5432,
+    "database": "flags",
+    "user": "flags_app",
+    "password": "REPLACE ME"
+  },
+  "db_admin": {
+    "host": "localhost",
+    "port": 5432,
+    "database": "flags",
+    "user": "flags_admin",
+    "password": "REPLACE ME"
+  },
+  "jwtSecret": "REPLACE ME",
+  "site": "http://localhost:3000",
+  "mailFrom": "\"Flag Dev\" <dev@flagdev.com>",
+  "smtpConfig": {
+    "host": "localhost",
+    "port": 587,
+    "requireTLS": false,
+    "auth": {
+      "user": "REPLACE ME",
+      "pass": "REPLACE ME"
+    }
+  },
+  "recaptchaKey": "6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI",
+  "recaptchaSecret": "6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ4WifJWe"
+}

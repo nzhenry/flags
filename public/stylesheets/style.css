@@ -1,5 +1,5 @@
 body {
-  padding: 50px;
+  padding: 20px;
   font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
 }
 a {
@@ -12,8 +12,20 @@ a {
   width: 100%;
 }
 .modal-dialog {
-  width: 400px;
+  max-width: 400px;
+  margin: 20px auto;
+  padding: 10px;
 }
 .modal-footer {
   text-align: center;
+}
+.ng-hide {
+  transition: all linear 0.3s;
+  opacity: 0;
+}
+.modal-dialog .ng-hide-add {
+  transition: 0s linear all;
+}
+[ng-cloak], .ng-cloak {
+  display: none !important;
 }
