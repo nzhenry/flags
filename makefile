@@ -35,7 +35,7 @@ run-tests:
 	@echo
 	@echo Running tests
 	@docker exec flags-test npm test || true
-	@docker cp flags-test:/usr/src/app/artifacts . || true
+	@docker cp flags-test:/home/myuser/app/artifacts . || true
 stop-containers:
 	@echo
 	@echo Stopping test containers
