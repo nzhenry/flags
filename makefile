@@ -47,13 +47,12 @@ stop-containers:
 deploy:
 	@echo
 	@echo Deploying app
-	@docker stop flags || true
-	@docker rm flags || true
+	@docker stop flags &> /dev/null || true
+	@docker rm flags &> /dev/null || true
 	docker run -d --name flags --link flagsql -e NODE_ENV=PROD -e VIRTUAL_HOST=flags.livehen.com -e VIRTUAL_PORT=3000 flags
 deploy-dev:
 	@echo
 	@echo Deploying app
-	@docker stop flags || true
-	@docker rm flags || true
+	@docker stop flags &> /dev/null || true
+	@docker rm flags &> /dev/null || true
 	docker run --name flags --link flagsql -p 3000:3000 flags
-
