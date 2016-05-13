@@ -38,7 +38,7 @@ describe('flags page', () => {
     before(function() {
       this.timeout(9999);
       return page.click('#signupButton')
-        .then(()=> page.waitForVisible('#emailInput'))
+        .then(()=> page.waitForVisible('#emailInput', 9999))
         .then(()=> page.setValue('#emailInput',`${uuid.v4()}@test`))
         .then(()=> page.setValue('#passwordInput','foobar'))
         .then(f => page.frame(0))
