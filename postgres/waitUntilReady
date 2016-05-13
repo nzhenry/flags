@@ -1,0 +1,3 @@
+echo "Wating until DB server is ready"
+until docker exec ${1} psql -U flags_admin -d flags -c "select now()" > /dev/null; do sleep 0.5; done
+echo "DB server is ready"
