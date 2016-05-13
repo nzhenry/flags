@@ -36,17 +36,17 @@ describe('flags page', () => {
   
   describe('if logged in', () => {
     before(function() {
-      this.timeout(5000);
+      this.timeout(9999);
       return page.click('#signupButton')
         .then(()=> page.waitForVisible('#emailInput'))
         .then(()=> page.setValue('#emailInput',`${uuid.v4()}@test`))
         .then(()=> page.setValue('#passwordInput','foobar'))
         .then(f => page.frame(0))
         .then(()=> page.click('#recaptcha-anchor'))
-        .then(()=> page.waitForExist('#recaptcha-anchor.recaptcha-checkbox-checked', 2000))
+        .then(()=> page.waitForExist('#recaptcha-anchor.recaptcha-checkbox-checked', 9999))
         .then(f => page.frameParent())
         .then(()=> page.click('#signupSubmit'))
-        .then(()=> page.waitForInvisible('#loginButton',1000));
+        .then(()=> page.waitForInvisible('#loginButton', 9999));
     });
     
     it('should have a logout button', () => {

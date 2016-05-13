@@ -19,4 +19,6 @@ start:
 	@docker run -d --name ${name} ${opts} flagsql
 	@echo "Wating for DB server to come online"
 	@until docker exec ${name} psql -U postgres -c "select now()" &> /dev/null; do sleep 1; done
+	@sleep 1
+	@until docker exec ${name} psql -U postgres -c "select now()" &> /dev/null; do sleep 1; done
 	@echo "DB server is online"

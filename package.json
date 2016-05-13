@@ -3,8 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "postinstall": "bower install",
-    "start": "knex migrate:latest && gulp start",
+    "start": "bower install && knex migrate:latest && gulp start",
     "test": "gulp test"
   },
   "dependencies": {
