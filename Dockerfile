@@ -1,13 +1,14 @@
 FROM node:6.1.0
 
-RUN mkdir -p /usr/src/app
-WORKDIR /usr/src/app
+RUN useradd -ms /bin/bash myuser
+USER myuser
+RUN mkdir -p /home/myuser/app
+WORKDIR /home/myuser/app
 
-COPY package.json /usr/src/app/
+COPY package.json /home/myuser/app/
+COPY bower.json /home/myuser/app/
 RUN npm install
-COPY bower.json /usr/src/app/
-RUN ./node_modules/.bin/bower install --allow-root
-COPY . /usr/src/app
+COPY . /home/myuser/app
 
 CMD [ "npm", "start" ]
 
