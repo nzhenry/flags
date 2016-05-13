@@ -7,20 +7,21 @@ dev: build-image deploy-dev
 remove-unused-images:
 	@echo
 	@echo Removing all unused docker images
-	@docker rmi $$(docker images -q --filter 'dangling=true') || true
+	@docker rmi $$(docker images -q --filter 'dangling=true') 2> /dev/null || true
 remove-containers:
 	@echo
 	@echo Removing old docker containers
-	@docker rm flags-test || true
-	@docker rm flags-tmp || true
-	@docker rm flagsql-test || true
-	@docker rm flags-selenium-firefox || true
+	@docker rm flags-test &> /dev/null || true
+	@docker rm flags-tmp &> /dev/null || true
+	@docker rm flagsql-test &> /dev/null || true
+	@docker rm flags-selenium-firefox &> /dev/null || true
 build-image:
 	@echo
 	@echo Building new docker image
 	@rm -rf artifacts || true
 	docker build -t flags .
 run-tests:
+	$(MAKE) stop-containers
 	@echo Starting up temporary database container for testing
 	cd postgres && $(MAKE) && cd ..
 	@echo
@@ -39,10 +40,10 @@ run-tests:
 stop-containers:
 	@echo
 	@echo Stopping test containers
-	@docker stop flags-test || true
-	@docker stop flags-tmp || true
-	@docker stop flagsql-test || true
-	@docker stop flags-selenium-firefox || true
+	@docker stop flags-test &> /dev/null || true
+	@docker stop flags-tmp &> /dev/null || true
+	@docker stop flagsql-test &> /dev/null || true
+	@docker stop flags-selenium-firefox &> /dev/null || true
 deploy:
 	@echo
 	@echo Deploying app
