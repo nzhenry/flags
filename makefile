@@ -11,10 +11,10 @@ remove-unused-images:
 remove-containers:
 	@echo
 	@echo Removing old docker containers
-	@docker rm flags-test &> /dev/null || true
-	@docker rm flags-tmp &> /dev/null || true
-	@docker rm flagsql-test &> /dev/null || true
-	@docker rm flags-selenium-firefox &> /dev/null || true
+	@docker rm flags-test || true
+	@docker rm flags-tmp || true
+	@docker rm flagsql-test || true
+	@docker rm flags-selenium-firefox || true
 build-image:
 	@echo
 	@echo Building new docker image
@@ -40,19 +40,19 @@ run-tests:
 stop-containers:
 	@echo
 	@echo Stopping test containers
-	@docker stop flags-test &> /dev/null || true
-	@docker stop flags-tmp &> /dev/null || true
-	@docker stop flagsql-test &> /dev/null || true
-	@docker stop flags-selenium-firefox &> /dev/null || true
+	@docker stop flags-test 2> /dev/null || true
+	@docker stop flags-tmp 2> /dev/null || true
+	@docker stop flagsql-test 2> /dev/null || true
+	@docker stop flags-selenium-firefox 2> /dev/null || true
 deploy:
 	@echo
 	@echo Deploying app
-	@docker stop flags &> /dev/null || true
-	@docker rm flags &> /dev/null || true
+	@docker stop flags || true
+	@docker rm flags || true
 	docker run -d --name flags --link flagsql -e NODE_ENV=PROD -e VIRTUAL_HOST=flags.livehen.com -e VIRTUAL_PORT=3000 flags
 deploy-dev:
 	@echo
 	@echo Deploying app
-	@docker stop flags &> /dev/null || true
-	@docker rm flags &> /dev/null || true
+	@docker stop flags || true
+	@docker rm flags || true
 	docker run --name flags --link flagsql -p 3000:3000 flags
