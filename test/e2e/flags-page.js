@@ -6,16 +6,14 @@ var uuid = require('node-uuid');
 
 chai.use(chaiAsPromised);
 
-describe('flags page', () => {
+describe('flags page', function() {
+  this.timeout(9999);
 
   before(function() {
-    this.timeout(9999);
-    page = webdriver.init().url('/');
-    page.waitForInvisible = function (sel,ms) {
-      return page.waitForVisible(sel,ms,true)
-    }
-    return page;
+    return page = webdriver.init('/');
   });
+  
+  after(() => page.end());
 
   it('should have the correct page title', () => {
     page.getTitle()
@@ -36,17 +34,16 @@ describe('flags page', () => {
   
   describe('if logged in', () => {
     before(function() {
-      this.timeout(9999);
       return page.click('#signupButton')
-        .then(()=> page.waitForVisible('#emailInput', 9999))
+        .then(()=> page.waitForVisible('#emailInput'))
         .then(()=> page.setValue('#emailInput',`${uuid.v4()}@test`))
         .then(()=> page.setValue('#passwordInput','foobar'))
         .then(f => page.frame(0))
         .then(()=> page.click('#recaptcha-anchor'))
-        .then(()=> page.waitForExist('#recaptcha-anchor.recaptcha-checkbox-checked', 9999))
+        .then(()=> page.waitForExist('#recaptcha-anchor.recaptcha-checkbox-checked'))
         .then(f => page.frameParent())
         .then(()=> page.click('#signupSubmit'))
-        .then(()=> page.waitForInvisible('#loginButton', 9999));
+        .then(()=> page.waitForInvisible('#loginButton'));
     });
     
     it('should have a logout button', () => {
@@ -115,6 +112,4 @@ describe('flags page', () => {
   describe('when the user scrolls to the bottom of the page', () => {
     it('should load more flags');
   });
-  
-  after(() => page.end());
 });

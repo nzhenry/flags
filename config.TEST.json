@@ -16,13 +16,9 @@
   "site": "http://flags-tmp:3000",
   "mailFrom": "\"Flag Test\" <test@flagtest.com>",
   "smtpConfig": {
-    "host": "flags-mock-smtp",
-    "port": 587,
-    "requireTLS": false,
-    "auth": {
-      "user": "usr",
-      "pass": "pwd"
-    }
+    "host": "flags-fakemail",
+    "port": 2525,
+    "requireTLS": false
   },
   "recaptchaKey": "6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI",
   "recaptchaSecret": "6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ4WifJWe"
