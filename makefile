@@ -11,26 +11,22 @@ remove-unused-images:
 remove-containers:
 	@echo
 	@echo Removing old docker containers
-	@docker stop flags-fakemail; docker rm flags-fakemail || true
-	@docker stop flags-test; docker rm flags-test || true
-	@docker stop flags-tmp; docker rm flags-tmp || true
-	@docker stop flagsql-test; docker rm flagsql-test || true
-	@docker stop flags-selenium-firefox; docker rm flags-selenium-firefox || true
+	@docker rm flags-test || true
+	@docker rm flags-tmp || true
+	@docker rm flagsql-test || true
+	@docker rm flags-selenium-firefox || true
 build-image:
 	@echo
 	@echo Building new docker image
 	@rm -rf artifacts || true
 	docker build -t flags .
 run-tests:
+	$(MAKE) stop-containers
 	@echo Starting up temporary database container for testing
 	cd postgres && $(MAKE) && cd ..
 	@echo
-	@echo Starting up fake STMP server
-	@rm -rf ~/flags-fakemail
-	@docker run -d --name flags-fakemail -p 2525:25 -v ~/flags-fakemail:/var/mail munkyboy/fakesmtp
-	@echo
 	@echo Starting up app container for testing
-	docker run -d --name flags-tmp --link flagsql-test --link flags-fakemail -e NODE_ENV=TEST flags
+	docker run -d --name flags-tmp --link flagsql-test -e NODE_ENV=TEST flags
 	@echo
 	@echo Starting up Selenium standalone server
 	docker run -d --name flags-selenium-firefox --link flags-tmp selenium/standalone-firefox
@@ -44,11 +40,10 @@ run-tests:
 stop-containers:
 	@echo
 	@echo Stopping test containers
-	@docker stop flags-fakemail|| true
-	@docker stop flags-test|| true
-	@docker stop flags-tmp|| true
-	@docker stop flagsql-test|| true
-	@docker stop flags-selenium-firefox|| true
+	@docker stop flags-test 2> /dev/null || true
+	@docker stop flags-tmp 2> /dev/null || true
+	@docker stop flagsql-test 2> /dev/null || true
+	@docker stop flags-selenium-firefox 2> /dev/null || true
 deploy:
 	@echo
 	@echo Deploying app
