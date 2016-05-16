@@ -7,7 +7,7 @@ var uuid = require('node-uuid');
 chai.use(chaiAsPromised);
 
 describe('flags page', function() {
-  this.timeout(9999);
+  this.timeout(22222);
 
   before(function() {
     return page = webdriver.init('/');
