@@ -6,16 +6,14 @@ var uuid = require('node-uuid');
 
 chai.use(chaiAsPromised);
 
-describe('flags page', () => {
+describe('flags page', function() {
+  this.timeout(9999);
 
   before(function() {
-    this.timeout(9999);
-    page = webdriver.init().url('/');
-    page.waitForInvisible = function (sel,ms) {
-      return page.waitForVisible(sel,ms,true)
-    }
-    return page;
+    return page = webdriver.init('/');
   });
+  
+  after(() => page.end());
 
   it('should have the correct page title', () => {
     page.getTitle()
