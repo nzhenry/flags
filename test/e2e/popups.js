@@ -7,7 +7,7 @@ var uuid = require('node-uuid');
 chai.use(chaiAsPromised);
 
 describe('popups', function() {
-  this.timeout(22222);
+  this.timeout(33333);
   
   before(function() {
     return page = webdriver.init('/');

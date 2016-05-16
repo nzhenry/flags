@@ -7,7 +7,7 @@ var uuid = require('node-uuid');
 chai.use(chaiAsPromised);
 
 describe('flags page', function() {
-  this.timeout(22222);
+  this.timeout(33333);
 
   before(function() {
     return page = webdriver.init('/');
@@ -34,7 +34,6 @@ describe('flags page', function() {
   
   describe('if logged in', () => {
     before(function() {
-      this.timeout(9999);
       return page.click('#signupButton')
         .then(()=> page.waitForVisible('#emailInput', 9999))
         .then(()=> page.setValue('#emailInput',`${uuid.v4()}@test`))
