@@ -87,11 +87,17 @@ describe('popups', function() {
     it('should have an email address input', () => {
       return assert.eventually.isTrue(page.isVisible('#resetPasswordModal #emailInput'));
     });
-    it('should have a recaptcha input');
-    it('should have a close button');
-    it('should have a "reset password" button');
+    it('should have a recaptcha input', () => {
+      return assert.eventually.isTrue(page.isVisible('#resetPasswordModal #captcha > div > div > iframe'));
+    });
+    it('should have a close button', () => {
+      return assert.eventually.isTrue(page.isVisible('#resetPasswordModal #closeButton'));
+    });
+    it('should have a "reset password" button', () => {
+      return assert.eventually.isTrue(page.isVisible('#resetPasswordModal #resetPasswordButton'));
+    });
   
-    describe('when the "forgot password" button is clicked', () => {
+    describe('when the "reset password" button is clicked', () => {
       describe('if no email address has been entered', () => {
         it('should show an error message');
       });
