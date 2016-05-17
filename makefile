@@ -37,7 +37,7 @@ run-tests:
 	docker run -d --name flags-selenium-firefox --link flags-tmp selenium/standalone-firefox
 	@echo
 	@echo Running tests
-	docker run -it --name flags-test --link flags-selenium-firefox -e NODE_ENV=TEST -v ~/docker-volumes/flags-fakemail:/usr/src/app/fakemail flags bash -c 'npm test'
+	docker run --name flags-test --link flags-selenium-firefox -e NODE_ENV=TEST -v ~/docker-volumes/flags-fakemail:/usr/src/app/fakemail flags bash -c 'npm test'
 	@docker cp flags-test:/home/myuser/app/artifacts .
 stop-containers:
 	@echo
