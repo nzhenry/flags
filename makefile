@@ -11,39 +11,42 @@ remove-unused-images:
 remove-containers:
 	@echo
 	@echo Removing old docker containers
-	@docker rm flags-test || true
-	@docker rm flags-tmp || true
-	@docker rm flagsql-test || true
-	@docker rm flags-selenium-firefox || true
+	@docker stop flags-fakemail; docker rm flags-fakemail || true
+	@docker stop flags-test; docker rm flags-test || true
+	@docker stop flags-tmp; docker rm flags-tmp || true
+	@docker stop flagsql-test; docker rm flagsql-test || true
+	@docker stop flags-selenium-firefox; docker rm flags-selenium-firefox || true
 build-image:
 	@echo
 	@echo Building new docker image
 	@rm -rf artifacts || true
 	docker build -t flags .
 run-tests:
-	$(MAKE) stop-containers
 	@echo Starting up temporary database container for testing
 	cd postgres && $(MAKE) && cd ..
 	@echo
+	@echo Starting up mock STMP server
+	@rm -rf ~/docker-volumes/flags-fakemail
+	@cd test/mock-smtp && docker build -t flags-fakemail-img . && cd ../..
+	@docker run -d --name flags-fakemail -v ~/docker-volumes/flags-fakemail:/usr/src/app/store flags-fakemail-img
+	@echo
 	@echo Starting up app container for testing
-	docker run -d --name flags-tmp --link flagsql-test -e NODE_ENV=TEST flags
+	docker run -d --name flags-tmp --link flagsql-test --link flags-fakemail -e NODE_ENV=TEST flags
 	@echo
 	@echo Starting up Selenium standalone server
 	docker run -d --name flags-selenium-firefox --link flags-tmp selenium/standalone-firefox
 	@echo
-	@echo Starting up test harness
-	docker run -dit --name flags-test --link flags-selenium-firefox -e NODE_ENV=TEST flags bash
-	@echo
 	@echo Running tests
-	@docker exec flags-test npm test || true
-	@docker cp flags-test:/home/myuser/app/artifacts . || true
+	docker run -it --name flags-test --link flags-selenium-firefox -e NODE_ENV=TEST -v ~/docker-volumes/flags-fakemail:/usr/src/app/fakemail flags bash -c 'npm test'
+	@docker cp flags-test:/home/myuser/app/artifacts .
 stop-containers:
 	@echo
 	@echo Stopping test containers
-	@docker stop flags-test 2> /dev/null || true
-	@docker stop flags-tmp 2> /dev/null || true
-	@docker stop flagsql-test 2> /dev/null || true
-	@docker stop flags-selenium-firefox 2> /dev/null || true
+	@docker stop flags-fakemail|| true
+	@docker stop flags-test|| true
+	@docker stop flags-tmp|| true
+	@docker stop flagsql-test|| true
+	@docker stop flags-selenium-firefox|| true
 deploy:
 	@echo
 	@echo Deploying app
