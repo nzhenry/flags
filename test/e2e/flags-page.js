@@ -35,15 +35,15 @@ describe('flags page', function() {
   describe('if logged in', () => {
     before(function() {
       return page.click('#signupButton')
-        .then(()=> page.waitForVisible('#emailInput', 9999))
+        .then(()=> page.waitForVisible('#emailInput'))
         .then(()=> page.setValue('#emailInput',`${uuid.v4()}@test`))
         .then(()=> page.setValue('#passwordInput','foobar'))
-        .then(f => page.frame(0))
+        .then(()=> page.frame(0))
         .then(()=> page.click('#recaptcha-anchor'))
-        .then(()=> page.waitForExist('#recaptcha-anchor.recaptcha-checkbox-checked', 9999))
-        .then(f => page.frameParent())
+        .then(()=> page.waitForExist('#recaptcha-anchor.recaptcha-checkbox-checked'))
+        .then(()=> page.frameParent())
         .then(()=> page.click('#signupSubmit'))
-        .then(()=> page.waitForInvisible('#loginButton', 9999));
+        .then(()=> page.waitForInvisible('#loginButton'));
     });
     
     it('should have a logout button', () => {

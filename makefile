@@ -28,7 +28,7 @@ run-tests:
 	@echo Starting up mock STMP server
 	@rm -rf ~/docker-volumes/flags-fakemail
 	@cd test/mock-smtp && docker build -t flags-fakemail-img . && cd ../..
-	@docker run -d --name flags-fakemail -v ~/docker-volumes/flags-fakemail:/usr/src/app/store flags-fakemail-img
+	@docker run -d --name flags-fakemail -v ~/docker-volumes/flags-fakemail:/usr/src/app/mail flags-fakemail-img
 	@echo
 	@echo Starting up app container for testing
 	docker run -d --name flags-tmp --link flagsql-test --link flags-fakemail -e NODE_ENV=TEST flags
@@ -37,7 +37,7 @@ run-tests:
 	docker run -d --name flags-selenium-firefox --link flags-tmp selenium/standalone-firefox
 	@echo
 	@echo Running tests
-	docker run --name flags-test --link flags-selenium-firefox -e NODE_ENV=TEST -v ~/docker-volumes/flags-fakemail:/usr/src/app/fakemail flags bash -c 'npm test'
+	docker run --name flags-test --link flags-selenium-firefox -e NODE_ENV=TEST -v ~/docker-volumes/flags-fakemail:/home/myuser/app/test/mock-smtp/mail flags bash -c 'npm test'
 	@docker cp flags-test:/home/myuser/app/artifacts .
 stop-containers:
 	@echo

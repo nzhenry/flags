@@ -1,9 +1,17 @@
 var gulp = require('gulp');
 
-gulp.task('start', function() {
-	require('./lib/server')(
+gulp.task('start', ['seed'], function() {
+	return require('./lib/server')(
 		require('./lib/app')()
 	);
+});
+
+gulp.task('seed', ['migrate'], function() {
+	return require('./lib/dbAdmin').seed();
+});
+
+gulp.task('migrate', function() {
+	return require('./lib/dbAdmin').migrate();
 });
 
 gulp.task('test', ['unit'], function() {

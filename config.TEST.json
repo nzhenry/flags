@@ -12,16 +12,18 @@
     "database": "flags",
     "user": "flags_admin"
   },
+  "seedsDirectory": "postgres/seeds",
   "jwtSecret": "test_jwt_secret",
   "site": "http://flags-tmp:3000",
   "mailFrom": "\"Flag Test\" <test@flagtest.com>",
   "smtpConfig": {
-    "host": "flags-mock-smtp",
-    "port": 587,
-    "requireTLS": false,
+    "host": "flags-fakemail",
+    "port": 2525,
+    "secure": false,
+    "ignoreTLS": true,
     "auth": {
-      "user": "usr",
-      "pass": "pwd"
+      "user": "testuser",
+      "pass": "testpass"
     }
   },
   "recaptchaKey": "6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI",

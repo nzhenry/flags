@@ -14,6 +14,7 @@
     "user": "flags_admin",
     "password": "REPLACE ME"
   },
+  "seedsDirectory": "postgres/seeds",
   "jwtSecret": "REPLACE ME",
   "site": "http://localhost:3000",
   "mailFrom": "\"Flag Dev\" <dev@flagdev.com>",

@@ -3,6 +3,7 @@ var chaiAsPromised = require("chai-as-promised");
 var assert = chai.assert;
 var webdriver = require('../webdriver');
 var uuid = require('node-uuid');
+var fs = require('fs-promise');
 
 chai.use(chaiAsPromised);
 
@@ -97,19 +98,56 @@ describe('popups', function() {
       return assert.eventually.isTrue(page.isVisible('#resetPasswordModal #resetPasswordButton'));
     });
   
-    describe('when the "reset password" button is clicked', () => {
-      describe('if no email address has been entered', () => {
-        it('should show an error message');
+    describe('if an unknown email address is entered', () => {
+      before(function() {
+        return page.setValue('#resetPasswordModal #emailInput',`${uuid.v4()}@test`);
       });
-  
-      describe('if an email address has been entered', () => {
-        describe('if a user with the given email address exists', () => {
-          it('should send a password reset email to the given email address');
-          it('should show a confirmation message');
+      describe('and the recaptcha has been completed', () => {
+        before(function() {
+          return page.frame(0)
+            .then(()=> page.click('#recaptcha-anchor'))
+            .then(()=> page.waitForExist('#recaptcha-anchor.recaptcha-checkbox-checked'))
+            .then(()=> page.frameParent());
         });
-    
-        describe('if there is no user with the given email address', () => {
-          it('should show a failure message');
+        describe('when the "reset password" button is clicked', () => {
+          before(function() {
+            return page.click('#resetPasswordModal #resetPasswordButton');
+          });
+          it('should show an error message', ()=> {
+            return page.waitForVisible('#resetPasswordModal div.alert-danger')
+              .then(()=> assert.eventually.equal(page.getText(
+                '#resetPasswordModal div.alert-danger'),
+                "No account found with that email address"));
+          });
+        });
+      });
+    });
+  
+    describe('if a known email address is entered', () => {
+      before(function() {
+        return page.setValue('#resetPasswordModal #emailInput', 'testuser@e2e-test');
+      });
+      describe('and the recaptcha has been completed', () => {
+        before(function() {
+          return page.frame(0)
+            .then(()=> page.click('#recaptcha-anchor'))
+            .then(()=> page.waitForExist('#recaptcha-anchor.recaptcha-checkbox-checked'))
+            .then(()=> page.frameParent());
+        });
+        describe('when the "reset password" button is clicked', () => {
+          before(function() {
+            return page.click('#resetPasswordModal #resetPasswordButton');
+          });
+          it('should show a confirmation message', ()=> {
+            return page.waitForVisible('#resetPasswordModal div.alert-info')
+              .then(()=> assert.eventually.equal(page.getText(
+                '#resetPasswordModal div.alert-info'),
+                "An email has been sent with instructions on how to reset your password"));
+          });
+          it('should have sent a password reset email to the given email address', ()=> {
+            console.log(fs.readdirSync('./test/mock-smtp/mail/'));
+            return assert.eventually.isTrue(fs.readdir('./test/mock-smtp/mail/').then(files => files.length > 0));
+          });
         });
       });
     });

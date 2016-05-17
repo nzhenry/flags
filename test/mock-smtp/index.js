@@ -23,7 +23,7 @@ var server = new SMTPServer({
   // Handle message stream
   onData: function (stream, session, callback) {
     var date = new Date();
-    stream.pipe(fs.createWriteStream(`store/${date.getTime()}.eml`));
+    stream.pipe(fs.createWriteStream(`mail/${date.getTime()}.eml`));
     stream.on('end', function () {
       callback(null, 'Message accepted');
     });
