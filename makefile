@@ -42,11 +42,11 @@ run-tests:
 stop-containers:
 	@echo
 	@echo Stopping test containers
-	@docker stop flags-fakemail|| true
-	@docker stop flags-test|| true
-	@docker stop flags-tmp|| true
-	@docker stop flagsql-test|| true
-	@docker stop flags-selenium-firefox|| true
+	@docker stop flags-fakemail || true
+	@docker stop flags-test || true
+	@docker stop flags-tmp || true
+	@docker stop flagsql-test || true
+	@docker stop flags-selenium-firefox || true
 deploy:
 	@echo
 	@echo Deploying app
