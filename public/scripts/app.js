@@ -11,7 +11,7 @@ angular.module('flagsApp', [
     return {
       link: function($scope, $element, $attrs) {
         var model = $parse($attrs.focusMe);
-        $scope.$watch(model, value => {
+        $scope.$watch(model, function(value) {
           if(value) { 
             $element[0].focus();
           }

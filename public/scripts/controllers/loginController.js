@@ -8,7 +8,7 @@ angular.module('flagsApp').controller('loginController', function ($scope, $uibM
     $scope.alerts = [];
     auth.login(credentials)
       .then($uibModalInstance.dismiss,
-        err => $scope.alerts.push({type: 'danger', msg: err}));
+        function(err) { $scope.alerts.push({type: 'danger', msg: err}) });
   }
   
   function cancel() {

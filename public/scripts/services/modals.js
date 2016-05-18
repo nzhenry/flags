@@ -10,7 +10,7 @@ angular.module('flagsApp').factory('modals', function($uibModal, $location, $roo
   }; 
   
   function closeModals() {
-    modals.forEach(modal => modal.dismiss());
+    modals.forEach(function(modal) { modal.dismiss() });
   }
   
   function open(opts) {

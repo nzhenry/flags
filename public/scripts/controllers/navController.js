@@ -1,8 +1,8 @@
 angular.module('flagsApp').controller('navController', function ($scope, modals, $location) {
 
   $scope.user = window.flagsApp.user;
-  $scope.$on('login', (e,user) => $scope.user = user);
-  $scope.$watch(() => $location.hash(), processHash);
+  $scope.$on('login', function(e,user) { $scope.user = user });
+  $scope.$watch(function() { return $location.hash() }, processHash);
   
   var routes = [
     login,
@@ -19,7 +19,7 @@ angular.module('flagsApp').controller('navController', function ($scope, modals,
   
   function tryRoute(regex, open) {
     if(!$location.hash().match(regex)) return false;
-    open().closed.then(() => {
+    open().closed.then(function() {
       if($location.hash().match(regex)) {
         $location.hash('');
       }
@@ -28,21 +28,21 @@ angular.module('flagsApp').controller('navController', function ($scope, modals,
   
   function setNewPassword(hash) {
     return tryRoute(/^resetPassword:.{1,}$/,
-      () => modals.setNewPassword(hash.substring(14)));
+      function() { return modals.setNewPassword(hash.substring(14)) });
   }
   
   function resetPassword(hash) {
     return tryRoute(/^resetPassword$/,
-      () => modals.resetPassword());
+      function() { return modals.resetPassword() });
   }
   
   function login(hash) {
     return tryRoute(/^login$/,
-      () => modals.login());
+      function() { return modals.login() });
   }
   
   function signup(hash) {
     return tryRoute(/^signup$/,
-      () => modals.signup());
+      function() { return modals.signup() });
   }
 })

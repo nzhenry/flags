@@ -1,7 +1,11 @@
 var config = require('../lib/config');
 
 var options = {
-	desiredCapabilities: { browserName: 'firefox' },
+	desiredCapabilities: {
+	browserName: 'firefox'
+// 	browserName: 'chrome'
+// 	browserName: 'phantomjs', 'phantomjs.page.settings.userAgent': ''
+},
 	host: config.seleniumHost,
 	baseUrl: config.site,
 	waitforTimeout: 9999

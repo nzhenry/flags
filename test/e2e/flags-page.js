@@ -10,7 +10,9 @@ describe('flags page', function() {
   this.timeout(33333);
 
   before(function() {
-    return page = webdriver.init('/');
+    page = webdriver.init('/');
+    page.setViewportSize({width: 800, height: 600}, false);
+    return page;
   });
   
   after(() => page.end());
@@ -41,7 +43,7 @@ describe('flags page', function() {
         .then(()=> page.frame(0))
         .then(()=> page.click('#recaptcha-anchor'))
         .then(()=> page.waitForExist('#recaptcha-anchor.recaptcha-checkbox-checked'))
-        .then(()=> page.frameParent())
+        .then(()=> page.frame())
         .then(()=> page.click('#signupSubmit'))
         .then(()=> page.waitForInvisible('#loginButton'));
     });

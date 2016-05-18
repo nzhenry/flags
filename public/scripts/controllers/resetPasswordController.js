@@ -29,11 +29,11 @@ angular.module('flagsApp').controller('resetPasswordController', function ($scop
     if(!isFormValid()) return;
     blockUI.start('Please wait...');
     auth.resetPassword(getEmail(), getCaptchaResponse())
-      .then(msg => {
+      .then(function(msg) {
           $scope.done = true;
           $scope.alerts.push({type: 'info', msg: msg});
         })
-      .catch(err => {
+      .catch(function(err) {
           $scope.alerts.push({type: 'danger', msg: err});
           grecaptcha.reset(pwdResetRecaptchaWidgetId);
         })

@@ -13,14 +13,14 @@ angular.module('flagsApp').factory('auth', function($http, $rootScope) {
  
   function login(credentials) {
     return $http.post('api/v1/login', credentials)
-      .catch(err => {
+      .catch(function(err) {
         if(err.status == 401) {
           throw 'Email/password combination not found';
         } else {
           throw exFromHttp(err);
         }
       })
-      .then(res => {
+      .then(function(res) {
         $rootScope.$broadcast('login',res.data.user);
         return res.data.user;
       });
@@ -33,10 +33,10 @@ angular.module('flagsApp').factory('auth', function($http, $rootScope) {
       captcha: captcha
     };
     return $http.post('api/v1/signup', payload)
-      .catch(err => {
+      .catch(function(err) {
         throw exFromHttp(err);
       })
-      .then(res => {
+      .then(function(res) {
         if(res.data.error) {
           throw res.data.error.message;
         }
@@ -51,10 +51,10 @@ angular.module('flagsApp').factory('auth', function($http, $rootScope) {
       captcha: captcha
     };
     return $http.post('api/v1/sendResetPasswordLink', payload)
-      .catch(err => {
+      .catch(function(err) {
         throw exFromHttp(err);
       })
-      .then(res => {
+      .then(function(res) {
         if(res.data.error) {
           throw res.data.error.message;
         }
@@ -64,7 +64,7 @@ angular.module('flagsApp').factory('auth', function($http, $rootScope) {
   
   function verifyPwdResetToken(token) {
     return $http.get('api/v1/verifyPasswordResetToken/' + token)
-      .then(res => {
+      .then(function(res) {
         if(res.data.result == 'fail') {
           throw new Error(res.data.reason);
         }

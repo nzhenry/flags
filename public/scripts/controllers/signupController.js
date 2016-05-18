@@ -30,7 +30,7 @@ angular.module('flagsApp').controller('signupController', function ($scope, $uib
     
     auth.signup(getCredentials(), getCaptcha())
       .then($uibModalInstance.dismiss)
-      .catch(err => {
+      .catch(function(err) {
           $scope.alerts.push({type: 'danger', msg: err});
           grecaptcha.reset();
         });

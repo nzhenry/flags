@@ -58,4 +58,4 @@ deploy-dev:
 	@echo Deploying app
 	@docker stop flags || true
 	@docker rm flags || true
-	docker run --name flags --link flagsql -p 3000:3000 flags
+	docker run -it --name flags --link flagsql -p 3000:3000 flags

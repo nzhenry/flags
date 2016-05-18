@@ -4,14 +4,19 @@ var assert = chai.assert;
 var webdriver = require('../webdriver');
 var uuid = require('node-uuid');
 var fs = require('fs-promise');
+var config = require('../../lib/config');
 
 chai.use(chaiAsPromised);
+
+var mailPath = 'test/mock-smtp/mail/';
 
 describe('popups', function() {
   this.timeout(33333);
   
   before(function() {
-    return page = webdriver.init('/');
+    page = webdriver.init('/');
+    page.setViewportSize({width: 800, height: 600}, false);
+    return page;
   });
   
   after(() => page.end());
@@ -79,7 +84,8 @@ describe('popups', function() {
 
   describe('"reset password" popup', () => {
     before(function() {
-      return page.click('#loginButton')
+      return page.waitForVisible('#loginButton')
+        .then(()=> page.click('#loginButton'))
         .then(()=> page.waitForVisible('#loginModal'))
         .then(()=> wait(200))
         .then(()=> page.click('#resetPasswordLink'))
@@ -107,7 +113,7 @@ describe('popups', function() {
           return page.frame(0)
             .then(()=> page.click('#recaptcha-anchor'))
             .then(()=> page.waitForExist('#recaptcha-anchor.recaptcha-checkbox-checked'))
-            .then(()=> page.frameParent());
+            .then(()=> page.frame());
         });
         describe('when the "reset password" button is clicked', () => {
           before(function() {
@@ -122,7 +128,7 @@ describe('popups', function() {
         });
       });
     });
-  
+    
     describe('if a known email address is entered', () => {
       before(function() {
         return page.setValue('#resetPasswordModal #emailInput', 'testuser@e2e-test');
@@ -132,7 +138,7 @@ describe('popups', function() {
           return page.frame(0)
             .then(()=> page.click('#recaptcha-anchor'))
             .then(()=> page.waitForExist('#recaptcha-anchor.recaptcha-checkbox-checked'))
-            .then(()=> page.frameParent());
+            .then(()=> page.frame());
         });
         describe('when the "reset password" button is clicked', () => {
           before(function() {
@@ -145,8 +151,13 @@ describe('popups', function() {
                 "An email has been sent with instructions on how to reset your password"));
           });
           it('should have sent a password reset email to the given email address', ()=> {
-            console.log(fs.readdirSync('./test/mock-smtp/mail/'));
-            return assert.eventually.isTrue(fs.readdir('./test/mock-smtp/mail/').then(files => files.length > 0));
+            return fs.readdir(mailPath)
+              .then(filenames => mailPath + filenames.sort()[filenames.length-1])
+              .then(filename => fs.readFile(filename, 'utf-8'))
+              .then(email => {
+                assert(/To: testuser@e2e-test/.test(email));
+                assert(/Subject: Password Reset/.test(email));
+              });
           });
         });
       });
