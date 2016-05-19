@@ -15,6 +15,6 @@ prod: start
 start:
 	@docker stop ${name} 2> /dev/null || true
 	@docker rm ${name} 2> /dev/null || true
-	@docker build -t ${name}-img --build-arg postgres_pwd=${postgres_pwd} --build-arg admin_pwd=${admin_pwd} --build-arg app_pwd=${app_pwd} .
-	@docker run -d --name ${name} ${opts} ${name}-img
+	docker build -t ${name}-img --build-arg postgres_pwd=${postgres_pwd} --build-arg admin_pwd=${admin_pwd} --build-arg app_pwd=${app_pwd} .
+	docker run -d --name ${name} ${opts} ${name}-img
 	@sh waitUntilReady ${name} 2> /dev/null
