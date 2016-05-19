@@ -15,7 +15,10 @@ remove-containers:
 	@docker stop flags-test; docker rm flags-test || true
 	@docker stop flags-tmp; docker rm flags-tmp || true
 	@docker stop flagsql-test; docker rm flagsql-test || true
+	@docker stop flags-selenium-hub; docker rm flags-selenium-hub || true
 	@docker stop flags-selenium-firefox; docker rm flags-selenium-firefox || true
+	@docker stop flags-selenium-chrome; docker rm flags-selenium-chrome || true
+	@docker stop flags-selenium-phantomjs; docker rm flags-selenium-phantomjs || true
 build-image:
 	@echo
 	@echo Building new docker image
@@ -33,11 +36,14 @@ run-tests:
 	@echo Starting up app container for testing
 	docker run -d --name flags-tmp --link flagsql-test --link flags-fakemail -e NODE_ENV=TEST flags
 	@echo
-	@echo Starting up Selenium standalone server
-	docker run -d --name flags-selenium-firefox --link flags-tmp selenium/standalone-firefox
+	@echo Starting up Selenium grid
+	docker run -d --name flags-selenium-hub selenium/hub
+	docker run -d --link flags-selenium-hub:hub --link flags-tmp --name flags-selenium-firefox selenium/node-firefox
+	docker run -d --link flags-selenium-hub:hub --link flags-tmp --name flags-selenium-chrome selenium/node-chrome
+	docker run -d --link flags-selenium-hub:hub --link flags-tmp --name flags-selenium-phantomjs akeem/selenium-node-phantomjs
 	@echo
 	@echo Running tests
-	docker run --name flags-test --link flags-selenium-firefox -e NODE_ENV=TEST -v ~/docker-volumes/flags-fakemail:/home/myuser/app/test/mock-smtp/mail flags bash -c 'npm test'
+	docker run --name flags-test --link flags-selenium-hub -e NODE_ENV=TEST -v ~/docker-volumes/flags-fakemail:/home/myuser/app/test/mock-smtp/mail flags bash -c 'npm test'
 	@docker cp flags-test:/home/myuser/app/artifacts .
 stop-containers:
 	@echo
@@ -46,7 +52,10 @@ stop-containers:
 	@docker stop flags-test || true
 	@docker stop flags-tmp || true
 	@docker stop flagsql-test || true
+	@docker stop flags-selenium-hub || true
 	@docker stop flags-selenium-firefox || true
+	@docker stop flags-selenium-chrome || true
+	@docker stop flags-selenium-phantomjs || true
 deploy:
 	@echo
 	@echo Deploying app

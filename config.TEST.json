@@ -1,5 +1,5 @@
 {
-  "seleniumHost": "flags-selenium-firefox",
+  "seleniumHost": "flags-selenium-hub",
   "db": {
     "host": "flagsql-test",
     "port": 5432,
