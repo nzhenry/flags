@@ -11,7 +11,7 @@ chai.use(chaiAsPromised);
 var mailPath = 'test/mock-smtp/mail/';
 
 describe('popups', function() {
-  this.timeout(33333);
+  this.timeout(22222);
   
   before(function() {
     page = webdriver.init('/');

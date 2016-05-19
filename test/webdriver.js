@@ -8,7 +8,7 @@ var options = {
 },
 	host: config.seleniumHost,
 	baseUrl: config.site,
-	waitforTimeout: 9999
+	waitforTimeout: 22222
 };
 module.exports = exports = require('webdriverio').remote(options);
 var init = exports.init;
