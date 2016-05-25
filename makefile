@@ -1,6 +1,6 @@
 e2e: remove-unused-images remove-containers build-image run-e2e-tests copy-artifacts stop-containers
 
-ci: remove-unused-images remove-containers build-image run-tests copy-artifacts stop-containers
+ci: remove-unused-images remove-containers build-image run-tests copy-artifacts
 
 cd: ci deploy
 
