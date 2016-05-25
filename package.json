@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "start": "bower install && gulp start",
-    "test": "gulp test; wdio"
+    "test": "gulp test",
+    "e2e": "wdio"
   },
   "dependencies": {
     "body-parser": "^1.15.0",

@@ -1,4 +1,6 @@
-ci: remove-unused-images remove-containers build-image run-tests stop-containers
+e2e: remove-unused-images remove-containers build-image run-e2e-tests copy-artifacts stop-containers
+
+ci: remove-unused-images remove-containers build-image run-tests copy-artifacts stop-containers
 
 cd: ci deploy
 
@@ -24,7 +26,7 @@ build-image:
 	@echo Building new docker image
 	@rm -rf artifacts || true
 	docker build -t flags .
-run-tests:
+run-e2e-tests:
 	@echo Starting up temporary database container for testing
 	cd postgres && $(MAKE) && cd ..
 	@echo
@@ -43,7 +45,12 @@ run-tests:
 	docker run -d --link flags-selenium-hub:hub --link flags-tmp --name flags-selenium-phantomjs akeem/selenium-node-phantomjs
 	@echo
 	@echo Running tests
-	docker run --name flags-test --link flags-selenium-hub -e NODE_ENV=TEST -v ~/docker-volumes/flags-fakemail:/home/myuser/app/test/mock-smtp/mail flags bash -c 'npm test'
+	docker run -it --name flags-test --link flags-selenium-hub -e NODE_ENV=TEST -v ~/docker-volumes/flags-fakemail:/home/myuser/app/test/mock-smtp/mail flags bash -c 'npm test; npm run e2e'
+run-tests:
+	@echo
+	@echo Running tests
+	docker run --name flags-test -e NODE_ENV=TEST flags bash -c 'npm test'
+copy-artifacts:
 	@docker cp flags-test:/home/myuser/app/artifacts .
 stop-containers:
 	@echo
