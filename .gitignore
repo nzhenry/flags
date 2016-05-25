@@ -7,3 +7,4 @@ bower_components
 public/scripts/ext
 config.*.json
 test/mock-smtp/mail
+errorShots

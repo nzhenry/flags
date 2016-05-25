@@ -1,25 +1,15 @@
 var chai = require("chai");
-var chaiAsPromised = require("chai-as-promised");
 var assert = chai.assert;
-var webdriver = require('../webdriver');
 var uuid = require('node-uuid');
-var fs = require('fs-promise');
-var config = require('../../lib/config');
-
-chai.use(chaiAsPromised);
+var fs = require('fs');
 
 var mailPath = 'test/mock-smtp/mail/';
 
 describe('popups', function() {
-  this.timeout(22222);
-  
-  before(function() {
-    page = webdriver.init('/');
-    page.setViewportSize({width: 800, height: 600}, false);
-    return page;
+  beforeEach(function() {
+    browser.setViewportSize({width: 800, height: 600}, false);
+    browser.url('/');
   });
-  
-  after(() => page.end());
   
   describe('onramp popup', () => {
     it('should show a message telling the user they "need to be logged in to use this feature"');
@@ -78,86 +68,80 @@ describe('popups', function() {
     });
   });
   
-  function wait(timeout) {
-    return new Promise(f => setTimeout(f, timeout));
-  }
-
   describe('"reset password" popup', () => {
-    before(function() {
-      return page.waitForVisible('#loginButton')
-        .then(()=> page.click('#loginButton'))
-        .then(()=> page.waitForVisible('#loginModal'))
-        .then(()=> wait(200))
-        .then(()=> page.click('#resetPasswordLink'))
-        .then(()=> page.waitForVisible('#resetPasswordModal'));
+    beforeEach(function() {
+      browser.waitForVisible('#loginButton');
+      browser.click('#loginButton');
+      browser.waitForVisible('#loginModal #resetPasswordLink');
+      browser.pause(200);
+      browser.click('#loginModal #resetPasswordLink');
+      browser.waitForVisible('#resetPasswordModal');
     });
     it('should have an email address input', () => {
-      return assert.eventually.isTrue(page.isVisible('#resetPasswordModal #emailInput'));
+      assert.isTrue(browser.isVisible('#resetPasswordModal #emailInput'));
     });
     it('should have a recaptcha input', () => {
-      return assert.eventually.isTrue(page.isVisible('#resetPasswordModal #captcha > div > div > iframe'));
+      assert.isTrue(browser.isVisible('#resetPasswordModal #captcha > div > div > iframe'));
     });
     it('should have a close button', () => {
-      return assert.eventually.isTrue(page.isVisible('#resetPasswordModal #closeButton'));
+      assert.isTrue(browser.isVisible('#resetPasswordModal #closeButton'));
     });
     it('should have a "reset password" button', () => {
-      return assert.eventually.isTrue(page.isVisible('#resetPasswordModal #resetPasswordButton'));
+      assert.isTrue(browser.isVisible('#resetPasswordModal #resetPasswordButton'));
     });
   
     describe('if an unknown email address is entered', () => {
-      before(function() {
-        return page.setValue('#resetPasswordModal #emailInput',`${uuid.v4()}@test`);
+      beforeEach(function() {
+        browser.setValue('#resetPasswordModal #emailInput',`${uuid.v4()}@test`);
       });
       describe('and the recaptcha has been completed', () => {
-        before(function() {
-          return page.frame(0)
-            .then(()=> page.click('#recaptcha-anchor'))
-            .then(()=> page.waitForExist('#recaptcha-anchor.recaptcha-checkbox-checked'))
-            .then(()=> page.frame());
+        beforeEach(function() {
+          browser.frame(0);
+          browser.click('#recaptcha-anchor');
+          browser.waitForExist('#recaptcha-anchor.recaptcha-checkbox-checked');
+          browser.frame();
         });
         describe('when the "reset password" button is clicked', () => {
-          before(function() {
-            return page.click('#resetPasswordModal #resetPasswordButton');
+          beforeEach(function() {
+            browser.click('#resetPasswordModal #resetPasswordButton');
           });
           it('should show an error message', ()=> {
-            return page.waitForVisible('#resetPasswordModal div.alert-danger')
-              .then(()=> assert.eventually.equal(page.getText(
+            browser.waitForVisible('#resetPasswordModal div.alert-danger');
+            assert.equal(browser.getText(
                 '#resetPasswordModal div.alert-danger'),
-                "No account found with that email address"));
+                "No account found with that email address");
           });
         });
       });
     });
     
     describe('if a known email address is entered', () => {
-      before(function() {
-        return page.setValue('#resetPasswordModal #emailInput', 'testuser@e2e-test');
+      beforeEach(function() {
+        browser.setValue('#resetPasswordModal #emailInput', 'testuser@e2e-test');
       });
       describe('and the recaptcha has been completed', () => {
-        before(function() {
-          return page.frame(0)
-            .then(()=> page.click('#recaptcha-anchor'))
-            .then(()=> page.waitForExist('#recaptcha-anchor.recaptcha-checkbox-checked'))
-            .then(()=> page.frame());
+        beforeEach(function() {
+          browser.frame(0);
+          browser.click('#recaptcha-anchor');
+          browser.waitForExist('#recaptcha-anchor.recaptcha-checkbox-checked');
+          browser.frame();
         });
         describe('when the "reset password" button is clicked', () => {
-          before(function() {
-            return page.click('#resetPasswordModal #resetPasswordButton');
+          beforeEach(function() {
+            browser.click('#resetPasswordModal #resetPasswordButton');
           });
           it('should show a confirmation message', ()=> {
-            return page.waitForVisible('#resetPasswordModal div.alert-info')
-              .then(()=> assert.eventually.equal(page.getText(
+            browser.waitForVisible('#resetPasswordModal div.alert-info');
+            assert.equal(browser.getText(
                 '#resetPasswordModal div.alert-info'),
-                "An email has been sent with instructions on how to reset your password"));
+                "An email has been sent with instructions on how to reset your password");
           });
           it('should have sent a password reset email to the given email address', ()=> {
-            return fs.readdir(mailPath)
-              .then(filenames => mailPath + filenames.sort()[filenames.length-1])
-              .then(filename => fs.readFile(filename, 'utf-8'))
-              .then(email => {
-                assert(/To: testuser@e2e-test/.test(email));
-                assert(/Subject: Password Reset/.test(email));
-              });
+            var filenames = fs.readdirSync(mailPath);
+            var filename = mailPath + filenames.sort()[filenames.length-1];
+            var email = fs.readFileSync(filename, 'utf-8');
+            assert(/To: testuser@e2e-test/.test(email));
+            assert(/Subject: Password Reset/.test(email));
           });
         });
       });
