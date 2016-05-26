@@ -2,7 +2,7 @@ angular.module('flagsApp').controller('navController', function ($scope, modals,
 
   $scope.user = window.flagsApp.user;
   $scope.$on('login', function(e,user) { $scope.user = user });
-  $scope.$watch(function() { return $location.hash() }, processHash);
+  $scope.$watch(function() { return $location.path() }, processPath);
   
   var routes = [
     login,
@@ -11,38 +11,38 @@ angular.module('flagsApp').controller('navController', function ($scope, modals,
     setNewPassword
   ];
   
-  function processHash(hash) {
+  function processPath(path) {
     for(var i = 0; i < routes.length; i++) {
-      if(routes[i](hash)) break;
+      if(routes[i](path)) break;
     }
   }
   
-  function tryRoute(regex, open) {
-    if(!$location.hash().match(regex)) return false;
+  function tryRoute(regex, path, open) {
+    if(!path.match(regex)) return false;
     open().closed.then(function() {
-      if($location.hash().match(regex)) {
-        $location.hash('');
+      if(path.match(regex)) {
+        $location.path('');
       }
     });
   }
   
-  function setNewPassword(hash) {
-    return tryRoute(/^resetPassword:.{1,}$/,
-      function() { return modals.setNewPassword(hash.substring(14)) });
+  function setNewPassword(path) {
+    return tryRoute(/^\/resetPassword:.{1,}$/, path,
+      function() { return modals.setNewPassword(path.substring(15)) });
   }
   
-  function resetPassword(hash) {
-    return tryRoute(/^resetPassword$/,
+  function resetPassword(path) {
+    return tryRoute(/^\/resetPassword$/, path,
       function() { return modals.resetPassword() });
   }
   
-  function login(hash) {
-    return tryRoute(/^login$/,
+  function login(path) {
+    return tryRoute(/^\/login$/, path,
       function() { return modals.login() });
   }
   
-  function signup(hash) {
-    return tryRoute(/^signup$/,
+  function signup(path) {
+    return tryRoute(/^\/signup$/, path,
       function() { return modals.signup() });
   }
 })

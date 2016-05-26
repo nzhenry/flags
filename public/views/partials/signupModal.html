@@ -24,6 +24,14 @@
 </div>
 <div class="modal-footer">
   <span>Already have an account? </span>
-  <a href="#login">Log in</a>
+  <a href="/login">Log in</a>
 </div>
-<script>grecaptcha.render("captcha", {sitekey: flagsApp.recaptchaKey})</script>
+<script>
+  var onloadCallback = renderRecaptcha;
+  renderRecaptcha();
+  function renderRecaptcha() {
+    if(window.grecaptcha) {
+      window.grecaptcha.render("captcha", {sitekey: flagsApp.recaptchaKey});
+    }
+  };
+</script>
