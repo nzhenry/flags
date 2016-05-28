@@ -1,5 +1,13 @@
 var gulp = require('gulp');
 
+gulp.task('import', ['scrape'], function() {
+  return require('./lib/import')();
+});
+
+gulp.task('scrape', function() {
+  
+});
+
 gulp.task('start', ['seed'], function() {
 	return require('./lib/server')(
 		require('./lib/app')()

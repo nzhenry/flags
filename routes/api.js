@@ -5,6 +5,7 @@ var http = require('request-promise');
 var auth = require('../lib/auth');
 var config = require('../lib/config');
 var User = require('../lib/model/user');
+var Flag = require('../lib/model/flag');
 var emailer = require('../lib/emailer');
 
 router.post('/login',
@@ -88,6 +89,13 @@ router.get('/verifyPasswordResetToken/:token', function(req, res, next) {
     })
     .then(x => res.json(x))
     .catch(next);
+});
+
+router.get('/flags', function(req, res, next) {
+  Flag.all(req.query).then(
+    x => { res.json(x) },
+    e => { next(e) }
+  );
 });
 
 function attemptSendPwdResetLink(email) {
