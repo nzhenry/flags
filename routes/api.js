@@ -4,8 +4,8 @@ var jwt = require('jsonwebtoken');
 var http = require('request-promise');
 var auth = require('../lib/auth');
 var config = require('../lib/config');
-var User = require('../lib/model/user');
-var Flag = require('../lib/model/flag');
+var users = require('../lib/model/users');
+var flags = require('../lib/model/flags');
 var emailer = require('../lib/emailer');
 
 router.post('/login',
@@ -27,7 +27,7 @@ router.post('/signup', (req, res, next) =>
         throw {captchaFail: true};
       }
     })
-    .then(() => User.create(req.body.email,req.body.password))
+    .then(() => users.create(req.body.email,req.body.password))
     .then(user => login(user,res))
     .catch(err => {
         if(err.code == 23505) { // 23505 = PSQL unique constraint violation
@@ -69,7 +69,7 @@ router.put('/resetPassword',
   (req, res, next) =>
     auth.verifyPwdResetToken(req.body.jwt)
       .then(payload => parseInt(payload.sub))
-      .then(User)
+      .then(users.one)
       .then(user => {
         user.newPassword(req.body.password);
         login(user, res);
@@ -91,15 +91,22 @@ router.get('/verifyPasswordResetToken/:token', function(req, res, next) {
     .catch(next);
 });
 
+router.get('/flags/:id', function(req, res, next) {
+  flags.one(req.params.id).then(
+    x => { res.json(x) },
+    e => { next(e) }
+  );
+});
+
 router.get('/flags', function(req, res, next) {
-  Flag.all(req.query).then(
+  flags.many(req.query).then(
     x => { res.json(x) },
     e => { next(e) }
   );
 });
 
 function attemptSendPwdResetLink(email) {
-  return User(email)
+  return users.one(email)
     .then(user => {
         if(user) {
           return emailer.sendResetPasswordLink(user);
