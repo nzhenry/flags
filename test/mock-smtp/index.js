@@ -3,6 +3,10 @@ var fs = require('fs');
 
 var SERVER_PORT = 2525;
 
+if(!fs.existsSync('mail')) {
+  fs.mkdirSync('mail');
+}
+
 var server = new SMTPServer({
   logger: true,
   disabledCommands: ['STARTTLS'],
