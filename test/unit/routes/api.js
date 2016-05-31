@@ -18,7 +18,7 @@ afterEach(function() {
 });
 
 describe('api routes', function() {
-	let express, router, auth;
+	let express, router, auth, data;
 	
 	beforeEach(function() {
 		// create mocks
@@ -35,14 +35,17 @@ describe('api routes', function() {
       sendResetPasswordLink: 'sendResetPasswordLink',
       signup: 'signup'
     };
+    data = {
+      flag: 'flag',
+      flags: 'flags'
+    };
 
 		// replace required modules with mocks
 		mockery.registerMock('express', express);
 		mockery.registerMock('../lib/auth', auth);
 		mockery.registerMock('../lib/config', {});
 		mockery.registerMock('../lib/emailer', {});
-		mockery.registerMock('../lib/model/users', {});
-		mockery.registerMock('../lib/model/flags', {});
+		mockery.registerMock('../lib/data', data);
     
     require('../../../routes/api');
 	});
@@ -77,5 +80,13 @@ describe('api routes', function() {
       auth.verifyPwdResetToken,
       auth.setNewUserPassword,
       auth.respondWithSessionToken));
+  });
+    
+  it('sets up the flag route', function() {
+    assert(router.get.calledWith('/flags/:id', data.flag));
+  });
+    
+  it('sets up the flags route', function() {
+    assert(router.get.calledWith('/flags', data.flags));
   });
 });

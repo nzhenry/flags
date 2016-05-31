@@ -1,8 +1,7 @@
 var express = require('express');
 var router = express.Router();
 var auth = require('../lib/auth');
-var users = require('../lib/model/users');
-var flags = require('../lib/model/flags');
+var data = require('../lib/data');
 
 router.post('/login',
   auth.validateCredentials,
@@ -26,18 +25,8 @@ router.post('/resetPassword',
   auth.setNewUserPassword,
   auth.respondWithSessionToken);
 
-router.get('/flags/:id', function(req, res, next) {
-  flags.one(req.params.id).then(
-    x => { res.json(x) },
-    e => { next(e) }
-  );
-});
+router.get('/flags/:id', data.flag);
 
-router.get('/flags', function(req, res, next) {
-  flags.many(req.query).then(
-    x => { res.json(x) },
-    e => { next(e) }
-  );
-});
+router.get('/flags', data.flags);
 
 module.exports = router;
