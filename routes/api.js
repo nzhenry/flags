@@ -12,34 +12,9 @@ router.post('/login',
   auth.validateCredentials,
   (req,res) => auth.respondWithSessionToken(req.user,res));
 
-router.post('/signup', (req, res, next) =>
-  http({
-      method: 'POST',
-      uri: 'https://www.google.com/recaptcha/api/siteverify',
-      form: {
-        secret: config.recaptchaSecret,
-        response: req.body.captcha
-      }
-    })
-    .then(body => JSON.parse(body))
-    .then(data => {
-      if(!data.success) {
-        throw {captchaFail: true};
-      }
-    })
-    .then(() => users.create(req.body.email,req.body.password))
-    .then(user => auth.respondWithSessionToken(user,res))
-    .catch(err => {
-        if(err.code == 23505) { // 23505 = PSQL unique constraint violation
-          res.json({error: {code: 1, message:
-            'An account with that email address already exists'}})
-        } else if(err.captchaFail) {
-          res.json({error: {code: 2, message:
-            'Could not verify captcha'}})
-        } else {
-          console.log(`err: ${err}`);
-          next(err);
-        }}));
+router.post('/signup',
+  auth.verifyCaptcha,
+  auth.signup);
 
 router.post('/sendResetPasswordLink', (req, res, next) =>
   http({

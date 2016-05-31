@@ -56,4 +56,10 @@ describe('api routes', function() {
     router.post.getCall(0).args[2](req, res);
     assert(auth.respondWithSessionToken.calledWith(req.user,res));
   });
+    
+  it('sets up the signup route', function() {
+    assert(router.post.calledWith('/signup',
+      auth.verifyCaptcha,
+      auth.signup));
+  });
 });
