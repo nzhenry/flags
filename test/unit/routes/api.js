@@ -69,7 +69,7 @@ describe('api routes', function() {
   it('sets up the verifyPasswordResetToken route', function() {
     assert(router.get.calledWith('/verifyPasswordResetToken/:token',
       auth.verifyPwdResetToken,
-      auth.respondWithSuccess));
+      auth.respondWithSessionToken));
   });
     
   it('sets up the resetPassword route', function() {
