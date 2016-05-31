@@ -62,4 +62,10 @@ describe('api routes', function() {
       auth.verifyCaptcha,
       auth.signup));
   });
+    
+  it('sets up the sendResetPasswordLink route', function() {
+    assert(router.post.calledWith('/sendResetPasswordLink',
+      auth.verifyCaptcha,
+      auth.sendResetPasswordLink));
+  });
 });
