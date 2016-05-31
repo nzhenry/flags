@@ -4,7 +4,8 @@ angular.module('flagsApp').factory('auth', function($http, $rootScope) {
     login: login,
     signup: signup,
     resetPassword: resetPassword,
-    verifyPwdResetToken: verifyPwdResetToken
+    verifyPwdResetToken: verifyPwdResetToken,
+    setNewPassword: setNewPassword
   };
   
   function exFromHttp(err) {
@@ -64,6 +65,18 @@ angular.module('flagsApp').factory('auth', function($http, $rootScope) {
   
   function verifyPwdResetToken(token) {
     return $http.get('api/v1/verifyPasswordResetToken/' + token)
+      .then(function(res) {
+        if(res.data.error) {
+          throw res.data.error;
+        }
+        $rootScope.$broadcast('login',res.data.user);
+        return res.data.result;
+      });
+  }
+  
+  function setNewPassword(token, password) {
+    var payload = {token:token,password:password};
+    return $http.post('api/v1/resetPassword', payload)
       .then(function(res) {
         if(res.data.error) {
           throw res.data.error;

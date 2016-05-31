@@ -19,7 +19,7 @@ router.post('/sendResetPasswordLink',
 
 router.get('/verifyPasswordResetToken/:token',
   auth.verifyPwdResetToken,
-  auth.respondWithSuccess);
+  auth.respondWithSessionToken);
 
 router.post('/resetPassword',
   auth.verifyPwdResetToken,
