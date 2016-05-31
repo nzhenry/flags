@@ -7,8 +7,4 @@ errorCodes = {
   malformedToken: 6
 };
 
-if(exports === 'undefined') { //client
-  this.errorCodes = errorCodes;
-} else { //server
-  module.exports = errorCodes;
-}
+try {module.exports = errorCodes} catch(e){errorCodes = errorCodes}
