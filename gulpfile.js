@@ -34,7 +34,7 @@ gulp.task('test', ['instrument'], function(done) {
 
 gulp.task('instrument', function () {
 	var istanbul = require('gulp-istanbul');
-  return gulp.src(['lib/**/*.js'])
+  return gulp.src(['lib/**/*.js','routes/**/*.js'])
     .pipe(istanbul())
     .pipe(istanbul.hookRequire());
 });

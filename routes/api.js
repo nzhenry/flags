@@ -10,7 +10,7 @@ var emailer = require('../lib/emailer');
 
 router.post('/login',
   auth.validateCredentials,
-  (req,res) => login(req.user,res));
+  (req,res) => auth.respondWithSessionToken(req.user,res));
 
 router.post('/signup', (req, res, next) =>
   http({
@@ -28,7 +28,7 @@ router.post('/signup', (req, res, next) =>
       }
     })
     .then(() => users.create(req.body.email,req.body.password))
-    .then(user => login(user,res))
+    .then(user => auth.respondWithSessionToken(user,res))
     .catch(err => {
         if(err.code == 23505) { // 23505 = PSQL unique constraint violation
           res.json({error: {code: 1, message:
@@ -72,7 +72,7 @@ router.put('/resetPassword',
       .then(users.one)
       .then(user => {
         user.newPassword(req.body.password);
-        login(user, res);
+        auth.respondWithSessionToken(user, res);
       })
       .catch(next));
 
@@ -114,13 +114,6 @@ function attemptSendPwdResetLink(email) {
           throw 'not found';
         }
       });
-}
-
-function login(user,res) {
-  var options = {subject: user.id.toString()};
-  var token = jwt.sign({}, config.jwtSecret, options);
-  res.cookie('Authorization', token);
-  res.json({user:{id:user.id,email:user.email},jwt:token});
 }
 
 module.exports = router;
