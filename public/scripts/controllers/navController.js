@@ -20,7 +20,7 @@ angular.module('flagsApp').controller('navController', function ($scope, modals,
   function tryRoute(regex, path, open) {
     if(!path.match(regex)) return false;
     open().closed.then(function() {
-      if(path.match(regex)) {
+      if($location.path().match(regex)) {
         $location.path('');
       }
     });

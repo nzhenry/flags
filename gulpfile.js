@@ -24,7 +24,7 @@ gulp.task('migrate', function() {
 
 gulp.task('test', ['instrument'], function(done) {
 	var istanbul = require('gulp-istanbul');
-	return gulp.src('test/unit/*.js', {read: false})
+	return gulp.src('test/unit/**/*.js', {read: false})
 			.pipe(require('gulp-mocha')({
 					reporter: 'mocha-multi',
 					reporterOptions: mochaReporterOptions('unit_tests', 'Unit Tests')

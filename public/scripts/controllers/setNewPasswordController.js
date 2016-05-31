@@ -9,11 +9,12 @@ angular.module('flagsApp').controller('setNewPasswordModalController', function 
   blockPromise.then(function() { return verifyPromise })
       .catch(function(err) {
         $scope.faulted = true;
-        if(err.message == 'expired token') {
+        console.log();
+        if(err.code == errorCodes.expiredToken) {
           $scope.alerts.push({type: 'danger', messages: [
             'That link is no longer valid.'],
-          links: [{message: "Click here to get a new one.", href: "#resetPassword"}]});
-        } else if(err.message == 'key mismatch') {
+          links: [{message: "Click here to get a new one.", href: "/resetPassword"}]});
+        } else if(err.code == errorCodes.keyMismatch) {
           $scope.alerts.push({type: 'danger', messages:[
             "A new password reset email has been sent since you received this one.",
             "Please use the link provided in the most recent password reset email."]});

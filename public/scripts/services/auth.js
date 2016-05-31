@@ -65,8 +65,8 @@ angular.module('flagsApp').factory('auth', function($http, $rootScope) {
   function verifyPwdResetToken(token) {
     return $http.get('api/v1/verifyPasswordResetToken/' + token)
       .then(function(res) {
-        if(res.data.result == 'fail') {
-          throw new Error(res.data.reason);
+        if(res.data.error) {
+          throw res.data.error;
         }
         return res.data.result;
       });

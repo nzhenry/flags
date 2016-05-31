@@ -3,10 +3,6 @@ var fs = require('fs');
 
 var SERVER_PORT = 2525;
 
-if(!fs.existsSync('mail')) {
-  fs.mkdirSync('mail');
-}
-
 var server = new SMTPServer({
   logger: true,
   disabledCommands: ['STARTTLS'],
@@ -27,6 +23,9 @@ var server = new SMTPServer({
   // Handle message stream
   onData: function (stream, session, callback) {
     var date = new Date();
+    if(!fs.existsSync('mail')) {
+      fs.mkdirSync('mail');
+    }
     stream.pipe(fs.createWriteStream(`mail/${date.getTime()}.eml`));
     stream.on('end', function () {
       callback(null, 'Message accepted');

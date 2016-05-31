@@ -30,7 +30,7 @@ describe('api routes', function() {
 		express = { Router: () => router };
     auth = {
       validateCredentials: 'validateCredentials',
-      respondWithSessionToken: sinon.spy(),
+      respondWithSessionToken: 'respondWithSessionToken',
       verifyCaptcha: 'verifyCaptcha',
       sendResetPasswordLink: 'sendResetPasswordLink',
       signup: 'signup'
@@ -44,28 +44,38 @@ describe('api routes', function() {
 		mockery.registerMock('../lib/model/users', {});
 		mockery.registerMock('../lib/model/flags', {});
     
-    require('../../routes/api');
+    require('../../../routes/api');
 	});
     
   it('sets up the login route', function() {
     assert(router.post.calledWith('/login',
       auth.validateCredentials,
-      sinon.match.func));
-    
-    let req = { user: 'user' }, res = 'res';
-    router.post.getCall(0).args[2](req, res);
-    assert(auth.respondWithSessionToken.calledWith(req.user,res));
+      auth.respondWithSessionToken));
   });
     
   it('sets up the signup route', function() {
     assert(router.post.calledWith('/signup',
       auth.verifyCaptcha,
-      auth.signup));
+      auth.signup,
+      auth.respondWithSessionToken));
   });
     
   it('sets up the sendResetPasswordLink route', function() {
     assert(router.post.calledWith('/sendResetPasswordLink',
       auth.verifyCaptcha,
       auth.sendResetPasswordLink));
+  });
+    
+  it('sets up the verifyPasswordResetToken route', function() {
+    assert(router.get.calledWith('/verifyPasswordResetToken/:token',
+      auth.verifyPwdResetToken,
+      auth.respondWithSuccess));
+  });
+    
+  it('sets up the resetPassword route', function() {
+    assert(router.post.calledWith('/resetPassword',
+      auth.verifyPwdResetToken,
+      auth.setNewUserPassword,
+      auth.respondWithSessionToken));
   });
 });

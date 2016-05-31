@@ -6,41 +6,25 @@ var flags = require('../lib/model/flags');
 
 router.post('/login',
   auth.validateCredentials,
-  (req,res) => auth.respondWithSessionToken(req.user,res));
+  auth.respondWithSessionToken);
 
 router.post('/signup',
   auth.verifyCaptcha,
-  auth.signup);
+  auth.signup,
+  auth.respondWithSessionToken);
 
 router.post('/sendResetPasswordLink',
   auth.verifyCaptcha,
   auth.sendResetPasswordLink);
 
-router.put('/resetPassword',
-  (req, res, next) =>
-    auth.verifyPwdResetToken(req.body.jwt)
-      .then(payload => parseInt(payload.sub))
-      .then(users.one)
-      .then(user => {
-        user.newPassword(req.body.password);
-        auth.respondWithSessionToken(user, res);
-      })
-      .catch(next));
+router.get('/verifyPasswordResetToken/:token',
+  auth.verifyPwdResetToken,
+  auth.respondWithSuccess);
 
-router.get('/verifyPasswordResetToken/:token', function(req, res, next) {
-  auth.verifyPwdResetToken(req.params.token)
-    .then(() => { return {result: 'ok'}})
-    .catch(err => {
-      switch(err.name) {
-        case 'TokenExpiredError': return {result: 'fail', reason: 'expired token'};
-        case 'PasswordResetKeyMismatchError': return {result: 'fail', reason: 'key mismatch'};
-        case 'JsonWebTokenError': return {result: 'fail', reason: 'malformed token'};
-        default: throw err;
-      }
-    })
-    .then(x => res.json(x))
-    .catch(next);
-});
+router.post('/resetPassword',
+  auth.verifyPwdResetToken,
+  auth.setNewUserPassword,
+  auth.respondWithSessionToken);
 
 router.get('/flags/:id', function(req, res, next) {
   flags.one(req.params.id).then(
