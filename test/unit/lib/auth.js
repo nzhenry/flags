@@ -21,12 +21,16 @@ describe('auth service', function() {
 	let auth,
 		passport = {},
 		passportLocal = {},
-		users = {};
+		jwt = {},
+		users = {},
+		config = { jwtSecret: 'jwtSecret' };
 	
 	before(function() {
 		mockery.registerMock('./model/users', users);
 		mockery.registerMock('passport', passport);
 		mockery.registerMock('passport-local', passportLocal);
+		mockery.registerMock('jsonwebtoken', jwt);
+		mockery.registerMock('./config', config);
 	})
   
   describe('require', function() {
@@ -168,6 +172,47 @@ describe('auth service', function() {
 			it("should invoke the 'next' callback", function() {
 				assert(next.calledOnce);
 			})
-		});
+		})
+	})
+	
+	describe('respondWithSessionToken', function() {
+		let req, res, user, options, token;
+		before(function() {
+			user = { id: 1 };
+			req = { user: user };
+			res = {};
+			options = { subject: user.id.toString() };
+			token = 'token';
+		})
+		
+		beforeEach(function() {
+			res.cookie = sinon.spy();
+			res.json = sinon.spy();
+			jwt.sign = sinon.stub().returns(token);
+			auth.respondWithSessionToken(req,res);
+		})
+		
+    it('should create a jwt token', function() {
+			assert(jwt.sign.calledOnce);
+      assert(jwt.sign.calledWith(
+				{}, config.jwtSecret, options));
+    })
+		
+    it('should add an auth cookie to the response headers', function() {
+			assert(res.cookie.calledOnce);
+      assert(res.cookie.calledWith(
+				'Authorization', token));
+    })
+		
+    it('should create the response body', function() {
+			assert(res.json.calledOnce);
+			assert(res.json.calledWith({
+				user:{
+					id: user.id,
+					email: user.email
+				},
+				jwt: token
+			}));
+    })
 	})
 })
