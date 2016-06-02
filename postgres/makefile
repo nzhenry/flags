@@ -5,7 +5,7 @@ test: name ?= flagsql-test
 prod: name ?= flagsql
 
 dev: opts ?= -p 5432:5432
-prod: opts ?= -v ~/postgres/data_volumes/${name}:/var/lib/postgresql/data --restart always
+prod: opts ?= -v ~/docker-volumes/${name}/data:/var/lib/postgresql/data --restart always
 
 default: test
 dev: start
