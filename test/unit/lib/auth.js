@@ -18,34 +18,25 @@ afterEach(function() {
 })
 
 describe('auth service', function() {
-	let auth, passport, passportLocal, users;
+	let auth,
+		passport = {},
+		passportLocal = {},
+		users = {};
 	
 	before(function() {
-		// create mocks
-		passport = {
-      authenticate: sinon.stub().returns('authenticate'),
-			use: sinon.spy(),
-			initialize: sinon.spy()
-    }
-		passportLocal = {}
-		users = {}
-
-		// replace required modules with mocks
 		mockery.registerMock('./model/users', users);
-		// mockery.registerMock('./errors/errorCodes', {});
-		// mockery.registerMock('./errors/errorUtils', {});
-		// mockery.registerMock('./errors/ApiError', {});
-		
 		mockery.registerMock('passport', passport);
 		mockery.registerMock('passport-local', passportLocal);
 	})
   
   describe('require', function() {
 		beforeEach(function() {
+			passport.authenticate = sinon.stub().returns('authenticate');
 			auth = require('../../../lib/auth');
 		});
 		
     it('should create middleware for the local auth strategy', function() {
+			assert(passport.authenticate.calledOnce);
       assert(passport.authenticate.calledWith(
 				'local', {session: false}));
     })
@@ -61,10 +52,13 @@ describe('auth service', function() {
 		})
 		
 		beforeEach(function(){
+			passport.initialize = sinon.spy();
+			passport.use = sinon.spy();
 			auth.init();
 		})
 		
     it('should create a local authentication strategy', function() {
+			assert(passportLocal.Strategy.calledOnce);
       assert(passportLocal.Strategy.calledWith(
 				{
 					usernameField: 'email',
@@ -96,11 +90,13 @@ describe('auth service', function() {
 		})
 		
 		it('should get the user', function() {
+			assert(users.one.calledOnce);
 			assert(users.one.calledWith(email));
 		})
 		
 		describe('if no user is found', function(){
 			it('fshould fail to authenticate', function() {
+				assert(done.calledOnce);
 				assert(done.calledWith(null,false));
 			})
 		})
@@ -115,6 +111,7 @@ describe('auth service', function() {
 			
 			describe('but the password is not valid', function(){
 				it('should fail to authenticate', function() {
+					assert(done.calledOnce);
 					assert(done.calledWith(null,false));
 				})
 			})
@@ -125,6 +122,7 @@ describe('auth service', function() {
 				});
 			
 				it('should authenticate successfully', function() {
+					assert(done.calledOnce);
 					assert(done.calledWith(null, sinon.match.truthy));
 				})
 			})
@@ -145,11 +143,13 @@ describe('auth service', function() {
 		})
 		
     it('should create middleware for the jwt auth strategy', function() {
+			assert(passport.authenticate.calledOnce);
       assert(passport.authenticate.calledWith(
 				'jwt', {session: false}, sinon.match.func));
     })
 		
     it('should execute the middleware for the local auth strategy', function() {
+			assert(jwtMiddleware.calledOnce);
 			assert(jwtMiddleware.calledWith(req,res,next));
     })
 		
