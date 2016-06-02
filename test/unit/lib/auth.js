@@ -45,12 +45,12 @@ describe('auth service', function() {
 			auth = require('../../../lib/auth');
 		});
 		
-    it('should create authentication middleware', function() {
+    it('should create middleware for the local auth strategy', function() {
       assert(passport.authenticate.calledWith(
 				'local', {session: false}));
     })
 		
-    it('should expose authentication middleware', function() {
+    it('should expose middleware for the local auth strategy', function() {
 			assert(auth.validateCredentials == 'authenticate');
     })
   })
@@ -74,7 +74,6 @@ describe('auth service', function() {
     })
 		
     it('should configure the app to use the local authentication strategy', function() {
-			console.log(passport.use.getCall(0).args[0]);
       assert(passport.use.calledWith(new passportLocal.Strategy()));
     })
 	})
@@ -133,6 +132,42 @@ describe('auth service', function() {
 	})
 	
 	describe('validateToken', function() {
+		let req, res, next, jwtMiddleware;
+		before(function() {
+			req = {};
+			res = {locals:{}};
+		})
+		beforeEach(function() {
+			jwtMiddleware = sinon.spy();
+			passport.authenticate = sinon.stub().returns(jwtMiddleware);
+			next = sinon.spy();
+			auth.validateToken(req,res,next);
+		})
 		
+    it('should create middleware for the jwt auth strategy', function() {
+      assert(passport.authenticate.calledWith(
+				'jwt', {session: false}, sinon.match.func));
+    })
+		
+    it('should execute the middleware for the local auth strategy', function() {
+			assert(jwtMiddleware.calledWith(req,res,next));
+    })
+		
+		describe('when the token is successfully validated', function() {
+			let successCallback, user = 'user';
+			beforeEach(function() {
+				successCallback = passport.authenticate.getCall(0).args[2];
+				successCallback(null,user);
+			});
+			it('should add the user to the request', function() {
+				assert(req.user == user);
+			})
+			it('should add the user to the response', function() {
+				assert(res.locals.user == user);
+			})
+			it("should invoke the 'next' callback", function() {
+				assert(next.calledOnce);
+			})
+		});
 	})
 })
