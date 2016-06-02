@@ -22,7 +22,7 @@ gulp.task('migrate', function() {
 	return require('./lib/dbAdmin').migrate();
 });
 
-gulp.task('test', ['instrument'], function(done) {
+gulp.task('test', ['instrument'], function() {
 	var istanbul = require('gulp-istanbul');
 	return gulp.src('test/unit/**/*.js', {read: false})
 			.pipe(require('gulp-mocha')({
