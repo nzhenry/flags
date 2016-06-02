@@ -4,7 +4,9 @@ errorCodes = {
   accountNotFound: 3,
   expiredToken: 4,
   keyMismatch: 5,
-  malformedToken: 6
+  malformedToken: 6,
+  usedToken: 7
 };
 
-try {module.exports = errorCodes} catch(e){errorCodes = errorCodes}
+try {module.exports = errorCodes}
+finally {}

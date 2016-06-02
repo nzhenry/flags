@@ -18,6 +18,10 @@ angular.module('flagsApp').controller('setNewPasswordModalController', function 
           $scope.alerts.push({type: 'danger', messages:[
             "A new password reset email has been sent since you received this one.",
             "Please use the link provided in the most recent password reset email."]});
+        } else if(err.code == errorCodes.usedToken) {
+          $scope.alerts.push({type: 'danger', messages:[
+            "That link has already been used to reset your password."],
+          links: [{message: "Click here to get a new one.", href: "/resetPassword"}]});
         } else {
           $scope.alerts.push({type: 'danger', messages: ["That link doesn't match the required format."]});
         }
