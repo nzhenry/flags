@@ -99,7 +99,7 @@ describe('auth service', function() {
 		})
 		
 		describe('if no user is found', function(){
-			it('fshould fail to authenticate', function() {
+			it('should fail to authenticate', function() {
 				assert(done.calledOnce);
 				assert(done.calledWith(null,false));
 			})
