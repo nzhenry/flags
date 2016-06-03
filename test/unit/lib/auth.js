@@ -5,25 +5,38 @@ let sinon = require('sinon');
 
 describe('auth service', function() {
 	let auth,
-		passport = {},
-		passportLocal = {},
-		jwt = {},
-		users = {},
-		config = { jwtSecret: 'jwtSecret' };
+			jwt = {},
+			passport = {},
+			pjwt = {},
+			passportLocal = {},
+			http = {},
+			config = { jwtSecret: 'jwtSecret' }
+			emailer = {},
+			ApiError = {},
+			errorCodes = {},
+			errorUtils = {},
+			users = {};
 	
 	beforeEach(function() {
 		// hijack require(...)
 		mockery.enable({
-			warnOnUnregistered: false,
 			warnOnReplace: false,
 			useCleanCache: true
-		})
-	
-		mockery.registerMock('./model/users', users);
-		mockery.registerMock('passport', passport);
-		mockery.registerMock('passport-local', passportLocal);
+		});
+		
+		mockery.registerAllowable('../../../lib/auth');
+		
 		mockery.registerMock('jsonwebtoken', jwt);
+		mockery.registerMock('passport', passport);
+		mockery.registerMock('passport-jwt', pjwt);
+		mockery.registerMock('passport-local', passportLocal);
+		mockery.registerMock('request-promise', http);
 		mockery.registerMock('./config', config);
+		mockery.registerMock('./emailer', emailer);
+		mockery.registerMock('./errors/ApiError', ApiError);
+		mockery.registerMock('./errors/errorCodes', errorCodes);
+		mockery.registerMock('./errors/errorUtils', errorUtils);
+		mockery.registerMock('./model/users', users);
 	})
 
 	afterEach(function() {
@@ -51,6 +64,7 @@ describe('auth service', function() {
 	describe('init', function() {
 		before(function() {
 			passportLocal.Strategy = sinon.spy()
+			pjwt.Strategy = sinon.spy()
 		})
 		
 		beforeEach(function(){
