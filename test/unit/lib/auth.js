@@ -3,20 +3,6 @@ let assert = chai.assert;
 let mockery = require('mockery');
 let sinon = require('sinon');
 
-before(function() {
-	// hijack require(...)
-	mockery.enable({
-		warnOnUnregistered: false,
-		warnOnReplace: false,
-		useCleanCache: true
-	})
-})
-
-afterEach(function() {
-	// return require(...) to normal
-	mockery.disable();
-})
-
 describe('auth service', function() {
 	let auth,
 		passport = {},
@@ -25,12 +11,24 @@ describe('auth service', function() {
 		users = {},
 		config = { jwtSecret: 'jwtSecret' };
 	
-	before(function() {
+	beforeEach(function() {
+		// hijack require(...)
+		mockery.enable({
+			warnOnUnregistered: false,
+			warnOnReplace: false,
+			useCleanCache: true
+		})
+	
 		mockery.registerMock('./model/users', users);
 		mockery.registerMock('passport', passport);
 		mockery.registerMock('passport-local', passportLocal);
 		mockery.registerMock('jsonwebtoken', jwt);
 		mockery.registerMock('./config', config);
+	})
+
+	afterEach(function() {
+		// return require(...) to normal
+		mockery.disable();
 	})
   
   describe('require', function() {

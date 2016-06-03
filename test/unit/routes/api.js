@@ -3,24 +3,17 @@ let assert = chai.assert;
 let mockery = require('mockery');
 let sinon = require('sinon');
 
-beforeEach(function() {
-	// hijack require(...)
-	mockery.enable({
-		warnOnUnregistered: false,
-		warnOnReplace: false,
-		useCleanCache: true
-	});
-});
-
-afterEach(function() {
-	// return require(...) to normal
-	mockery.disable();
-});
-
 describe('api routes', function() {
 	let express, router, auth, data;
 	
 	beforeEach(function() {
+    // hijack require(...)
+    mockery.enable({
+      warnOnUnregistered: false,
+      warnOnReplace: false,
+      useCleanCache: true
+    });
+  
 		// create mocks
 		router = {
       get: sinon.spy(),
@@ -49,6 +42,11 @@ describe('api routes', function() {
     
     require('../../../routes/api');
 	});
+
+  afterEach(function() {
+    // return require(...) to normal
+    mockery.disable();
+  });
     
   it('sets up the login route', function() {
     assert(router.post.calledWith('/login',
