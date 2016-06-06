@@ -31,7 +31,6 @@ describe('auth service', function() {
 		pjwt = require('passport-jwt');
 		passportLocal = require('passport-local');
 		http = require('request-promise');
-		// config = require(local('config'));
 		emailer = require(local('emailer'));
 		errorUtils = require(local('errors/errorUtils'));
 		users = require(local('model/users'));
@@ -56,7 +55,11 @@ describe('auth service', function() {
 		
 		beforeEach(function() {
 			req = {id: 'req'};
-			res = {id: 'res'};
+			res = {
+				cookie: sinon.spy(),
+				json: sinon.spy(),
+				locals: {id:'locals'}
+			};
 			next = sinon.spy();
 			run = () => { return auth = require(local('auth')) }
 			passport.authenticate = sinon.stub().returns('authenticate');
@@ -66,7 +69,7 @@ describe('auth service', function() {
 			run();
 			assert(passport.authenticate.called);
 			assert(passport.authenticate.calledOnce);
-      assert(passport.authenticate.calledWith(
+      assert(passport.authenticate.calledWithExactly(
 				'local', {session: false}));
     })
 		
@@ -104,7 +107,7 @@ describe('auth service', function() {
 				run();
 				assert(passportLocal.Strategy.called);
 				assert(passportLocal.Strategy.calledOnce);
-				assert(passportLocal.Strategy.calledWith(
+				assert(passportLocal.Strategy.calledWithExactly(
 					{
 						usernameField: 'email',
 						passwordField: 'password'
@@ -114,19 +117,19 @@ describe('auth service', function() {
 			
 			it('should configure the app to use the local authentication strategy', function() {
 				run();
-				assert(passport.use.calledWith(new passportLocal.Strategy()));
+				assert(passport.use.calledWithExactly(new passportLocal.Strategy()));
 			})
 			
 			it('should create a jwt authentication strategy', function() {
 				run();
 				assert(pjwt.Strategy.called);
 				assert(pjwt.Strategy.calledOnce);
-				assert(pjwt.Strategy.calledWith(opts, sinon.match.func));
+				assert(pjwt.Strategy.calledWithExactly(opts, sinon.match.func));
 			})
 			
 			it('should configure the app to use the jwt authentication strategy', function() {
 				run();
-				assert(passport.use.calledWith(new pjwt.Strategy()));
+				assert(passport.use.calledWithExactly(new pjwt.Strategy()));
 			})
 			
 			it('should configure the app to use the jwt authentication strategy', function() {
@@ -176,7 +179,7 @@ describe('auth service', function() {
 					run();
 					assert(users.one.called);
 					assert(users.one.calledOnce);
-					assert(users.one.calledWith(email));
+					assert(users.one.calledWithExactly(email));
 				})
 				
 				describe('if no user is found', function(){
@@ -184,7 +187,7 @@ describe('auth service', function() {
 						return run().then(() => {
 							assert(done.called);
 							assert(done.calledOnce);
-							assert(done.calledWith(null,false));
+							assert(done.calledWithExactly(null,false));
 						})
 					})
 				})
@@ -202,7 +205,7 @@ describe('auth service', function() {
 							return run().then(() => {
 								assert(done.called);
 								assert(done.calledOnce);
-								assert(done.calledWith(null,false));
+								assert(done.calledWithExactly(null,false));
 							})
 						})
 					})
@@ -216,7 +219,7 @@ describe('auth service', function() {
 							return run().then(() => {
 								assert(done.called);
 								assert(done.calledOnce);
-								assert(done.calledWith(null, sinon.match.truthy));
+								assert(done.calledWithExactly(null, sinon.match.truthy));
 							})
 						})
 					})
@@ -234,7 +237,6 @@ describe('auth service', function() {
 					passport.authenticate = sinon.stub().returns(jwtMiddleware);
 					return auth.validateToken(req, res, next);
 				};
-				res.locals = {id:'locals'};
 				jwtMiddleware = sinon.spy();
 			})
 			
@@ -242,7 +244,7 @@ describe('auth service', function() {
 				run();
 				assert(passport.authenticate.called);
 				assert(passport.authenticate.calledOnce);
-				assert(passport.authenticate.calledWith(
+				assert(passport.authenticate.calledWithExactly(
 					'jwt', {session: false}, sinon.match.func));
 			})
 			
@@ -250,7 +252,7 @@ describe('auth service', function() {
 				run();
 				assert(jwtMiddleware.called);
 				assert(jwtMiddleware.calledOnce);
-				assert(jwtMiddleware.calledWith(req,res,next));
+				assert(jwtMiddleware.calledWithExactly(req,res,next));
 			})
 			
 			describe('when the token is successfully validated', function() {
@@ -296,8 +298,6 @@ describe('auth service', function() {
 					auth.respondWithSessionToken(req, res);
 				};
 				req.user = user;
-				res.cookie = sinon.spy();
-				res.json = sinon.spy();
 				jwt.sign = sinon.stub().returns(token);
 			})
 			
@@ -305,7 +305,7 @@ describe('auth service', function() {
 				run();
 				assert(jwt.sign.called);
 				assert(jwt.sign.calledOnce);
-				assert(jwt.sign.calledWith(
+				assert(jwt.sign.calledWithExactly(
 					{}, config.jwtSecret, options));
 			})
 			
@@ -313,7 +313,7 @@ describe('auth service', function() {
 				run();
 				assert(res.cookie.called);
 				assert(res.cookie.calledOnce);
-				assert(res.cookie.calledWith(
+				assert(res.cookie.calledWithExactly(
 					'Authorization', token));
 			})
 			
@@ -321,13 +321,95 @@ describe('auth service', function() {
 				run();
 				assert(res.json.called);
 				assert(res.json.calledOnce);
-				assert(res.json.calledWith({
+				assert(res.json.calledWithExactly({
 					user:{
 						id: user.id,
 						email: user.email
 					},
 					jwt: token
 				}));
+			})
+		})
+		
+		describe('verifyCaptcha', function() {
+			let data;
+			
+			beforeEach(function() {
+				let prepare = run;
+				run = () => {
+					prepare();
+					return auth.verifyCaptcha(req, res, next);
+				};
+				config.recaptchaSecret = 'recaptchaSecret';
+				req.body = {captcha: 'captcha'}
+				// http.post = sinon.stub().returns(Promise.resolve(null));
+				http.post = sinon.stub().withArgs({
+					uri: 'https://www.google.com/recaptcha/api/siteverify',
+					form: {
+						secret: 'recaptchaSecret',
+						response: 'captcha'
+					}
+				});
+				errorUtils.jsonError = sinon.stub().returns('json error');
+			})
+			
+			describe('if http.post returns an error', function(){
+				beforeEach(function(){
+					http.post.returns(Promise.reject('error'));
+				})
+				
+				it('should pss on the error', function() {
+					return run()
+						.then(() => {
+							assert(next.called);
+							assert(next.calledOnce);
+							assert(next.calledWithExactly('error'));
+						});
+				})
+			})
+			
+			describe('if http.post returns a non-json response', function() {
+				beforeEach(function(){
+					http.post.returns(Promise.resolve(null));
+				})
+				
+				it('should pass on the error thrown by JSON.parse', function() {
+					return run()
+						.then(() => {
+							assert(next.called);
+							assert(next.calledOnce);
+						});
+				})
+			})
+			
+			describe("if the reponse doesn't contain 'success'", function() {
+				beforeEach(function() {
+					http.post.returns(Promise.resolve('{}'));
+				})
+				
+				it('should create an error and return it as json', function() {
+					return run()
+						.then(() => {
+							assert(res.json.called);
+							assert(res.json.calledOnce);
+							assert(res.json.calledWithExactly('json error'));
+						});
+				})
+			})
+			
+			describe("if the reponse contains 'success'", function() {
+				beforeEach(function() {
+					http.post.returns(Promise.resolve('{"success":true}'));
+				})
+				
+				it('should call next', function() {
+					return run()
+						.then(() => {
+							assert(next.called);
+							assert(next.calledOnce);
+							assert(next.calledWithExactly());
+						});
+				})
 			})
 		})
   })
