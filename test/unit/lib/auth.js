@@ -52,6 +52,14 @@ describe('auth service', function() {
 	
   describe('require', function() {
 		let auth, spy, run, req, res, next;
+
+		function addToRun(func) {
+			let prepare = run;
+			run = () => {
+				var result = prepare();
+				return result && result.then ? result.then(func) : func();
+			};
+		}
 		
 		beforeEach(function() {
 			req = {
@@ -95,11 +103,7 @@ describe('auth service', function() {
 			})
 			
 			beforeEach(function() {
-				let prepare = run;
-				run = () => {
-					prepare();
-					return auth.init();
-				};
+				addToRun(() => auth.init());
 				config.jwtSecret = 'jwt_secret';
 				passportLocal.Strategy = sinon.spy();
 				pjwt.Strategy = sinon.spy();
@@ -169,12 +173,10 @@ describe('auth service', function() {
 					done;
 				
 				beforeEach(function() {
-					let prepare = run;
-					run = () => {
-						prepare();
+					addToRun(() => {
 						let authenticate = passportLocal.Strategy.getCall(0).args[1];
 						return authenticate(email, password, done);
-					}
+					});
 					users.one = sinon.stub().returns(Promise.resolve(null));
 					done = sinon.spy();
 				})
@@ -235,12 +237,10 @@ describe('auth service', function() {
 			let jwtMiddleware;
 			
 			beforeEach(function() {
-				let prepare = run;
-				run = () => {
-					prepare();
+				addToRun(() => {
 					passport.authenticate = sinon.stub().returns(jwtMiddleware);
 					return auth.validateToken(req, res, next);
-				};
+				});
 				jwtMiddleware = sinon.spy();
 			})
 			
@@ -262,13 +262,11 @@ describe('auth service', function() {
 			describe('when the token is successfully validated', function() {
 				let successCallback, user = 'user';
 				beforeEach(function() {
-					let prepare = run;
-					run = () => {
-						prepare();
+					addToRun(() => {
 						assert(passport.authenticate.calledOnce);
 						successCallback = passport.authenticate.getCall(0).args[2];
 						return successCallback(null,user);
-					};
+					});
 				});
 				it('should add the user to the request', function() {
 					run();
@@ -295,11 +293,7 @@ describe('auth service', function() {
 			})
 			
 			beforeEach(function() {
-				let prepare = run;
-				run = () => {
-					prepare();
-					auth.respondWithSessionToken(req, res);
-				};
+				addToRun(() => auth.respondWithSessionToken(req, res));
 				req.user = user;
 				jwt.sign = sinon.stub().returns(token);
 			})
@@ -338,11 +332,7 @@ describe('auth service', function() {
 			let data;
 			
 			beforeEach(function() {
-				let prepare = run;
-				run = () => {
-					prepare();
-					return auth.verifyCaptcha(req, res, next);
-				};
+				addToRun(() => auth.verifyCaptcha(req, res, next));
 				config.recaptchaSecret = 'recaptchaSecret';
 				req.body.captcha = 'captcha';
 				// http.post = sinon.stub().returns(Promise.resolve(null));
@@ -418,11 +408,7 @@ describe('auth service', function() {
 		
 		describe('signup', function() {
 			beforeEach(function() {
-				let prepare = run;
-				run = () => {
-					prepare();
-					return auth.signup(req, res, next);
-				};
+				addToRun(() => auth.signup(req, res, next));
 				users.create = sinon.stub().withArgs('email', 'password');
 				req.body.email = 'email';
 				req.body.password = 'password';
@@ -483,11 +469,7 @@ describe('auth service', function() {
 		
 		describe('send reset password link', function() {
 			beforeEach(function() {
-				let prepare = run;
-				run = () => {
-					prepare();
-					return auth.sendResetPasswordLink(req, res, next);
-				};
+				addToRun(() => auth.sendResetPasswordLink(req, res, next));
 				req.body.email = 'email';
 				users.one = sinon.stub().withArgs('email');
 				emailer.sendResetPasswordLink = sinon.spy();
@@ -557,10 +539,7 @@ describe('auth service', function() {
 		
 		describe('verify password reset token', function() {
 			beforeEach(function() {
-				let prepare = run;
-				run = () => {
-					prepare();
-				};
+				addToRun(() => auth.verifyPwdResetToken(req, res, next));
 			})
 			
 		// 	describe('bla', function() {
@@ -575,10 +554,9 @@ describe('auth service', function() {
 		
 		describe('verifyJWT', function() {
 			beforeEach(function() {
-				let prepare = run;
-				run = () => {
-					prepare();
-				};
+				addToRun(() => {
+
+				});
 			})
 			
 		// 	describe('bla', function() {
@@ -593,10 +571,9 @@ describe('auth service', function() {
 		
 		describe('getInvalidPwdResetTokenResponse', function() {
 			beforeEach(function() {
-				let prepare = run;
-				run = () => {
-					prepare();
-				};
+				addToRun(() => {
+					
+				});
 			})
 			
 		// 	describe('bla', function() {
