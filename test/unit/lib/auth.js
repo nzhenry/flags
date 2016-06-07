@@ -54,11 +54,15 @@ describe('auth service', function() {
 		let auth, spy, run, req, res, next;
 		
 		beforeEach(function() {
-			req = {id: 'req'};
+			req = {
+				id: 'req',
+				body: {}
+			};
 			res = {
 				cookie: sinon.spy(),
 				json: sinon.spy(),
-				locals: {id:'locals'}
+				locals: {id:'locals'},
+				send: sinon.spy()
 			};
 			next = sinon.spy();
 			run = () => { return auth = require(local('auth')) }
@@ -75,7 +79,7 @@ describe('auth service', function() {
 		
     it('should expose middleware for the local auth strategy', function() {
 			run();
-			assert(auth.validateCredentials == 'authenticate');
+			assert.equal(auth.validateCredentials, 'authenticate');
     })
 	
 		describe('init', function() {
@@ -149,13 +153,13 @@ describe('auth service', function() {
 				it("should return the 'Authorization' header if present", function() {
 					run();
 					req.get.returns('header');
-					assert(extractMethod()(req) == 'header');
+					assert.equal(extractMethod()(req), 'header');
 				})
 				
 				it("should return the 'Authorization' cookie if the 'Authorization' header is not present", function() {
 					run();
 					req.get.returns(null);
-					assert(extractMethod()(req) == 'cookie');
+					assert.equal(extractMethod()(req), 'cookie');
 				})
 			})
 		
@@ -265,15 +269,14 @@ describe('auth service', function() {
 						successCallback = passport.authenticate.getCall(0).args[2];
 						return successCallback(null,user);
 					};
-					next = sinon.spy();
 				});
 				it('should add the user to the request', function() {
 					run();
-					assert(req.user == user);
+					assert.equal(req.user, user);
 				})
 				it('should add the user to the response', function() {
 					run();
-					assert(res.locals.user == user);
+					assert.equal(res.locals.user, user);
 				})
 				it("should invoke the 'next' callback", function() {
 					run();
@@ -341,7 +344,7 @@ describe('auth service', function() {
 					return auth.verifyCaptcha(req, res, next);
 				};
 				config.recaptchaSecret = 'recaptchaSecret';
-				req.body = {captcha: 'captcha'}
+				req.body.captcha = 'captcha';
 				// http.post = sinon.stub().returns(Promise.resolve(null));
 				http.post = sinon.stub().withArgs({
 					uri: 'https://www.google.com/recaptcha/api/siteverify',
@@ -411,6 +414,199 @@ describe('auth service', function() {
 						});
 				})
 			})
+		})
+		
+		describe('signup', function() {
+			beforeEach(function() {
+				let prepare = run;
+				run = () => {
+					prepare();
+					return auth.signup(req, res, next);
+				};
+				users.create = sinon.stub().withArgs('email', 'password');
+				req.body.email = 'email';
+				req.body.password = 'password';
+			})
+			
+			describe('when users.create returns a user', function() {
+				beforeEach(function() {
+					users.create.returns(Promise.resolve('user'));
+				})
+				
+				it('should add the user to the request object', function() {
+					return run().then(() => {
+						assert.equal('user', req.user);
+					});
+				})
+				
+				it('should call next', function() {
+					return run().then(() => {
+						assert(next.called);
+						assert(next.calledOnce);
+						assert(next.calledWithExactly());
+					});
+				})
+			})
+			
+			describe('when users.create is rejected with error code 23505', function() {
+				beforeEach(function() {
+					users.create.returns(Promise.reject({code:23505})); // 23505 = PSQL unique constraint violation
+					errorUtils.jsonError = sinon.stub().withArgs(
+							errorCodes.emailClash,
+							'An account with that email address already exists')
+						.returns('error');
+				})
+				
+				it('should respond with an error message formatted in json', function() {
+					return run().then(() => {
+						assert(res.json.called);
+						assert(res.json.calledOnce);
+						assert(res.json.calledWithExactly('error'));
+					});
+				})
+			})
+			
+			describe('when users.create is rejected', function() {
+				beforeEach(function() {
+					users.create.returns(Promise.reject('error'));
+				})
+				
+				it('should pass on the error', function() {
+					return run().then(() => {
+						assert(next.called);
+						assert(next.calledOnce);
+						assert(next.calledWithExactly('error'));
+					});
+				})
+			})
+		})
+		
+		describe('send reset password link', function() {
+			beforeEach(function() {
+				let prepare = run;
+				run = () => {
+					prepare();
+					return auth.sendResetPasswordLink(req, res, next);
+				};
+				req.body.email = 'email';
+				users.one = sinon.stub().withArgs('email');
+				emailer.sendResetPasswordLink = sinon.spy();
+			})
+			
+			describe('if users.one is rejected', function() {
+				beforeEach(function() {
+					users.one.returns(Promise.reject('error'));
+				})
+				
+				it('should pass on the error', function() {
+					return run().then(() => {
+						assert(next.called);
+						assert(next.calledOnce);
+						assert(next.calledWithExactly('error'));
+					});
+				})
+			})
+			
+			describe('if a user is found', function() {
+				beforeEach(function() {
+					users.one.returns(Promise.resolve('user'));
+				})
+				
+				it('should send a password reset email to that user', function() {
+					return run().then(() => {
+						assert(emailer.sendResetPasswordLink.called);
+						assert(emailer.sendResetPasswordLink.calledOnce);
+						assert(emailer.sendResetPasswordLink.calledWithExactly('user'));
+					});
+				})
+				
+				it('should respond with an appropriate success message', function() {
+					return run().then(() => {
+						assert(res.send.called);
+						assert(res.send.calledOnce);
+						assert(res.send.calledWithExactly(
+							'An email has been sent with instructions on how to reset your password'));
+					});
+				})
+			})
+			
+			describe('if no user is found', function() {
+				beforeEach(function() {
+					users.one.returns(Promise.resolve(null));
+					errorUtils.jsonError = sinon.stub().withArgs(
+							errorCodes.accountNotFound,
+							'No account found with that email address')
+						.returns('error');
+				})
+				
+				it('should not send a password reset email', function() {
+					return run().then(() => {
+						assert.isFalse(emailer.sendResetPasswordLink.called);
+					});
+				})
+				
+				it('should respond with an error message formatted in json', function() {
+					return run().then(() => {
+						assert(res.json.called);
+						assert(res.json.calledOnce);
+						assert(res.json.calledWithExactly('error'));
+					});
+				})
+			})
+		})
+		
+		describe('verify password reset token', function() {
+			beforeEach(function() {
+				let prepare = run;
+				run = () => {
+					prepare();
+				};
+			})
+			
+		// 	describe('bla', function() {
+		// 		beforeEach(function() {
+		// 		})
+				
+		// 		it('', function() {
+		// 			run();
+		// 		})
+		// 	})
+		})
+		
+		describe('verifyJWT', function() {
+			beforeEach(function() {
+				let prepare = run;
+				run = () => {
+					prepare();
+				};
+			})
+			
+		// 	describe('bla', function() {
+		// 		beforeEach(function() {
+		// 		})
+				
+		// 		it('', function() {
+		// 			run();
+		// 		})
+		// 	})
+		})
+		
+		describe('getInvalidPwdResetTokenResponse', function() {
+			beforeEach(function() {
+				let prepare = run;
+				run = () => {
+					prepare();
+				};
+			})
+			
+		// 	describe('bla', function() {
+		// 		beforeEach(function() {
+		// 		})
+				
+		// 		it('', function() {
+		// 			run();
+		// 		})
+		// 	})
 		})
   })
 })
