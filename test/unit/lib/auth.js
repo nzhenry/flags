@@ -26,13 +26,13 @@ describe('auth service', function() {
 		config = require(local('config'));
 		config.db = null;
 		
-		jwt = require('jsonwebtoken');
 		passport = require('passport');
 		pjwt = require('passport-jwt');
 		passportLocal = require('passport-local');
 		http = require('request-promise');
 		emailer = require(local('emailer'));
 		errorUtils = require(local('errors/errorUtils'));
+		jwt = require(local('jwt/jwt-promise'));
 		users = require(local('model/users'));
 	})
 	
@@ -45,6 +45,7 @@ describe('auth service', function() {
 		resetRequire(local('config'));
 		resetRequire(local('emailer'));
 		resetRequire(local('errors/errorUtils'));
+		resetRequire(local('jwt/jwt-promise'));
 		resetRequire(local('model/users'));
 		
 		resetRequire(local('auth'));
@@ -177,7 +178,7 @@ describe('auth service', function() {
 						let authenticate = passportLocal.Strategy.getCall(0).args[1];
 						return authenticate(email, password, done);
 					});
-					users.one = sinon.stub().returns(Promise.resolve(null));
+					users.one = sinon.stub().returns(Promise.resolve());
 					done = sinon.spy();
 				})
 				
@@ -335,7 +336,6 @@ describe('auth service', function() {
 				addToRun(() => auth.verifyCaptcha(req, res, next));
 				config.recaptchaSecret = 'recaptchaSecret';
 				req.body.captcha = 'captcha';
-				// http.post = sinon.stub().returns(Promise.resolve(null));
 				http.post = sinon.stub().withArgs({
 					uri: 'https://www.google.com/recaptcha/api/siteverify',
 					form: {
@@ -363,7 +363,7 @@ describe('auth service', function() {
 			
 			describe('if http.post returns a non-json response', function() {
 				beforeEach(function(){
-					http.post.returns(Promise.resolve(null));
+					http.post.returns(Promise.resolve());
 				})
 				
 				it('should pass on the error thrown by JSON.parse', function() {
@@ -514,7 +514,7 @@ describe('auth service', function() {
 			
 			describe('if no user is found', function() {
 				beforeEach(function() {
-					users.one.returns(Promise.resolve(null));
+					users.one.returns(Promise.resolve());
 					errorUtils.jsonError = sinon.stub().withArgs(
 							errorCodes.accountNotFound,
 							'No account found with that email address')
@@ -538,35 +538,120 @@ describe('auth service', function() {
 		})
 		
 		describe('verify password reset token', function() {
+			let verifyStub, verifyResult;
+
 			beforeEach(function() {
 				addToRun(() => auth.verifyPwdResetToken(req, res, next));
+				req.params = {token: 'paramsToken'};
+				req.body = {token: 'bodyToken'};
+				verifyStub = sinon.stub(jwt, 'verify', () => Promise.resolve(verifyResult));
+				config.jwtSecret = 'jwt_secret';
+			})
+				
+			it('should use the configured jwt secret', function() {
+				run();
+				assert(verifyStub.calledWith(sinon.match.string, 'jwt_secret'));
 			})
 			
-		// 	describe('bla', function() {
-		// 		beforeEach(function() {
-		// 		})
+			describe('if the request method is GET', function() {
+				beforeEach(function() {
+					req.method = 'GET';
+				})
 				
-		// 		it('', function() {
-		// 			run();
-		// 		})
-		// 	})
-		})
-		
-		describe('verifyJWT', function() {
-			beforeEach(function() {
-				addToRun(() => {
+				it('should get the token from the request params', function() {
+					run();
+					assert(verifyStub.calledWith('paramsToken'));
+				})
+			})
+			
+			describe('if the request method is POST', function() {
+				beforeEach(function() {
+					req.method = 'POST';
+				})
+				
+				it('should get the token from the request body', function() {
+					run();
+					assert(verifyStub.calledWith('bodyToken'));
+				})
+			})
+			
+			describe('if jwt.verify is rejected', function() {
+				beforeEach(function() {
+					jwt.verify = sinon.stub().returns(Promise.reject('error'));
+				})
+				
+				it('should pass on the error', function() {
+					return run().then(() => {
+						assert(next.called);
+						assert(next.calledOnce);
+						assert(next.calledWithExactly('error'));
+					});
+				})
+			})
+			
+			describe('if jwt.verify is successful', function() {
+				beforeEach(function() {
+					verifyResult = {sub: '1', prk: 'prk'};
+					// users.one = sinon.stub().withArgs(1).returns(Promise.resolve('user'));
+					users.one = sinon.spy();
+				})
+				
+				it('should get the user', function() {
+					return run().then(() => {
+						assert(users.one.called);
+						assert(users.one.calledOnce);
+						assert(users.one.calledWithExactly(1));
+					});
+				})
+			
+				describe('but no user is found', function() {
+					beforeEach(function() {
+						users.one = sinon.stub().withArgs(1).returns(Promise.resolve());
+						errorUtils.jsonError = sinon.stub()
+							.withArgs(errorCodes.accountNotFound)
+							.returns('error');
+					})
+					
+					it("should respond with a 'user not found' error", function() {
+						return run().then(() => {
+							assert(res.json.called);
+							assert(res.json.calledOnce);
+							assert(res.json.calledWith('error'));
+						});
+					})
+				})
+			
+				describe('and a user is found', function() {
+					beforeEach(function() {
+						users.one = sinon.stub().withArgs(1).returns(Promise.resolve('user'));
+					})
+			
+					describe('and the password reset key matches the one in the user record', function() {
+						let user;
 
-				});
+						beforeEach(function() {
+							user = {
+								pwd_reset_key: 'prk'
+							};
+							users.one = sinon.stub().returns(Promise.resolve(user));
+						})
+						
+						it('should add the user to the request object', function() {
+							return run().then(() => {
+								assert.equal(user, req.user);
+							});
+						})
+						
+						it('should call next', function() {
+							return run().then(() => {
+								assert(next.called);
+								assert(next.calledOnce);
+								assert(next.calledWithExactly());
+							});
+						})
+					})
+				})
 			})
-			
-		// 	describe('bla', function() {
-		// 		beforeEach(function() {
-		// 		})
-				
-		// 		it('', function() {
-		// 			run();
-		// 		})
-		// 	})
 		})
 		
 		describe('getInvalidPwdResetTokenResponse', function() {
