@@ -168,7 +168,37 @@ describe('auth service', function() {
 					assert.equal(extractMethod()(req), 'cookie');
 				})
 			})
-			
+		
+			describe('on jwt authenticate success', function() {
+				let payload, done;
+
+				beforeEach(function() {
+					addToRun(() => {
+						let onJwtAuthenticateSuccess = pjwt.Strategy.getCall(0).args[1];
+						return onJwtAuthenticateSuccess(payload, done);
+					});
+					users.one = sinon.stub();
+					users.one.returns(Promise.resolve('user'));
+					payload = { sub: '1' };
+					done = sinon.spy();
+				})
+
+				it('should get a user', function() {
+					run();
+					assert(users.one.called);
+					assert(users.one.calledOnce);
+					assert(users.one.calledWithExactly(1));
+				})
+
+				it('should invoke the callback with the user', function() {
+					return run().then(() => {
+						assert(done.called);
+						assert(done.calledOnce);
+						assert(done.calledWithExactly(null, 'user'));
+					});
+				})
+			})
+		
 			describe('authenticate', function() {
 				let email = 'email',
 					password = 'password',
