@@ -590,10 +590,11 @@ describe('auth service', function() {
 			})
 			
 			describe('if jwt.verify is successful', function() {
+				let user;
+
 				beforeEach(function() {
 					verifyResult = {sub: '1', prk: 'prk'};
-					// users.one = sinon.stub().withArgs(1).returns(Promise.resolve('user'));
-					users.one = sinon.spy();
+					users.one = sinon.stub();
 				})
 				
 				it('should get the user', function() {
@@ -606,7 +607,7 @@ describe('auth service', function() {
 			
 				describe('but no user is found', function() {
 					beforeEach(function() {
-						users.one = sinon.stub().withArgs(1).returns(Promise.resolve());
+						users.one.returns(Promise.resolve(user));
 						errorUtils.jsonError = sinon.stub()
 							.withArgs(errorCodes.accountNotFound)
 							.returns('error');
@@ -623,17 +624,15 @@ describe('auth service', function() {
 			
 				describe('and a user is found', function() {
 					beforeEach(function() {
-						users.one = sinon.stub().withArgs(1).returns(Promise.resolve('user'));
+						errorUtils.jsonError = sinon.stub();
 					})
-			
-					describe('and the password reset key matches the one in the user record', function() {
-						let user;
 
+					describe('and the password reset key matches the one in the user record', function() {
 						beforeEach(function() {
 							user = {
 								pwd_reset_key: 'prk'
 							};
-							users.one = sinon.stub().returns(Promise.resolve(user));
+							users.one.returns(Promise.resolve(user));
 						})
 						
 						it('should add the user to the request object', function() {
@@ -650,25 +649,84 @@ describe('auth service', function() {
 							});
 						})
 					})
+			
+					describe('but the password reset key does not match the one in the user record', function() {
+						beforeEach(function() {
+							user = {
+								pwd_reset_key: 'something else'
+							};
+							users.one.returns(Promise.resolve(user));
+							errorUtils.jsonError
+								.withArgs(errorCodes.keyMismatch)
+								.returns('error');
+						})
+						
+						it('should not add the user to the request object', function() {
+							return run().then(() => {
+								assert.isUndefined(req.user);
+							});
+						})
+					
+						it("should respond with a 'key mismatch' error", function() {
+							return run().then(() => {
+								assert(res.json.called);
+								assert(res.json.calledOnce);
+								assert(res.json.calledWith('error'));
+							});
+						})
+					})
+			
+					describe('but the user record has no password reset key', function() {
+						beforeEach(function() {
+							user = {};
+							users.one.returns(Promise.resolve(user));
+							errorUtils.jsonError
+								.withArgs(errorCodes.usedToken)
+								.returns('error');
+						})
+						
+						it('should not add the user to the request object', function() {
+							return run().then(() => {
+								assert.isUndefined(req.user);
+							});
+						})
+					
+						it("should respond with a 'used token' error", function() {
+							return run().then(() => {
+								assert(res.json.called);
+								assert(res.json.calledOnce);
+								assert(res.json.calledWith('error'));
+							});
+						})
+					})
 				})
 			})
 		})
 		
-		describe('getInvalidPwdResetTokenResponse', function() {
+		describe('set new user password', function() {
 			beforeEach(function() {
 				addToRun(() => {
 					
 				});
 			})
 			
-		// 	describe('bla', function() {
-		// 		beforeEach(function() {
-		// 		})
+			describe('if user.newPassword is rejected', function() {
+				beforeEach(function() {
+				})
 				
-		// 		it('', function() {
-		// 			run();
-		// 		})
-		// 	})
+				// it('should pass on the error', function() {
+				// 	run();
+				// })
+			})
+			
+			describe('if user.newPassword is successful', function() {
+				beforeEach(function() {
+				})
+				
+				// it('should call next', function() {
+				// 	run();
+				// })
+			})
 		})
   })
 })
