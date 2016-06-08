@@ -76,6 +76,7 @@ describe('auth service', function() {
 			next = sinon.spy();
 			run = () => { return auth = require(local('auth')) }
 			passport.authenticate = sinon.stub().returns('authenticate');
+			errorUtils.jsonError = sinon.stub().returns('json error');
 		})
 		
     it('should create middleware for the local auth strategy', function() {
@@ -167,7 +168,7 @@ describe('auth service', function() {
 					assert.equal(extractMethod()(req), 'cookie');
 				})
 			})
-		
+			
 			describe('authenticate', function() {
 				let email = 'email',
 					password = 'password',
@@ -343,7 +344,6 @@ describe('auth service', function() {
 						response: 'captcha'
 					}
 				});
-				errorUtils.jsonError = sinon.stub().returns('json error');
 			})
 			
 			describe('if http.post returns an error', function(){
@@ -437,17 +437,16 @@ describe('auth service', function() {
 			describe('when users.create is rejected with error code 23505', function() {
 				beforeEach(function() {
 					users.create.returns(Promise.reject({code:23505})); // 23505 = PSQL unique constraint violation
-					errorUtils.jsonError = sinon.stub().withArgs(
-							errorCodes.emailClash,
-							'An account with that email address already exists')
-						.returns('error');
 				})
 				
 				it('should respond with an error message formatted in json', function() {
 					return run().then(() => {
+						assert(errorUtils.jsonError.calledWithExactly(
+							errorCodes.emailClash,
+							'An account with that email address already exists'));
 						assert(res.json.called);
 						assert(res.json.calledOnce);
-						assert(res.json.calledWithExactly('error'));
+						assert(res.json.calledWithExactly('json error'));
 					});
 				})
 			})
@@ -515,10 +514,6 @@ describe('auth service', function() {
 			describe('if no user is found', function() {
 				beforeEach(function() {
 					users.one.returns(Promise.resolve());
-					errorUtils.jsonError = sinon.stub().withArgs(
-							errorCodes.accountNotFound,
-							'No account found with that email address')
-						.returns('error');
 				})
 				
 				it('should not send a password reset email', function() {
@@ -529,22 +524,25 @@ describe('auth service', function() {
 				
 				it('should respond with an error message formatted in json', function() {
 					return run().then(() => {
+						assert(errorUtils.jsonError.calledWithExactly(
+							errorCodes.accountNotFound,
+							'No account found with that email address'));
 						assert(res.json.called);
 						assert(res.json.calledOnce);
-						assert(res.json.calledWithExactly('error'));
+						assert(res.json.calledWithExactly('json error'));
 					});
 				})
 			})
 		})
 		
 		describe('verify password reset token', function() {
-			let verifyStub, verifyResult;
+			let verifyStub, verifyResult = Promise.resolve();
 
 			beforeEach(function() {
 				addToRun(() => auth.verifyPwdResetToken(req, res, next));
 				req.params = {token: 'paramsToken'};
 				req.body = {token: 'bodyToken'};
-				verifyStub = sinon.stub(jwt, 'verify', () => Promise.resolve(verifyResult));
+				verifyStub = sinon.stub(jwt, 'verify', () => verifyResult);
 				config.jwtSecret = 'jwt_secret';
 			})
 				
@@ -576,16 +574,48 @@ describe('auth service', function() {
 			})
 			
 			describe('if jwt.verify is rejected', function() {
-				beforeEach(function() {
-					jwt.verify = sinon.stub().returns(Promise.reject('error'));
+				describe('with an unexpected error', function() {
+					beforeEach(function() {
+						verifyResult = Promise.reject('error');
+					})
+					
+					it('should pass on the error', function() {
+						return run().then(() => {
+							assert(next.called);
+							assert(next.calledOnce);
+							assert(next.calledWithExactly('error'));
+						});
+					})
 				})
-				
-				it('should pass on the error', function() {
-					return run().then(() => {
-						assert(next.called);
-						assert(next.calledOnce);
-						assert(next.calledWithExactly('error'));
-					});
+
+				describe('with a TokenExpiredError error', function() {
+					beforeEach(function() {
+						verifyResult = Promise.reject({name: 'TokenExpiredError'});
+					})
+					
+					it("should respond with a 'token expired' error", function() {
+						return run().then(() => {
+							assert(errorUtils.jsonError.calledWith(errorCodes.expiredToken))
+							assert(res.json.called);
+							assert(res.json.calledOnce);
+							assert(res.json.calledWith('json error'));
+						});
+					})
+				})
+
+				describe('with a JsonWebTokenError error', function() {
+					beforeEach(function() {
+						verifyResult = Promise.reject({name: 'JsonWebTokenError'});
+					})
+					
+					it("should respond with a 'malformed token' error", function() {
+						return run().then(() => {
+							assert(errorUtils.jsonError.calledWith(errorCodes.malformedToken))
+							assert(res.json.called);
+							assert(res.json.calledOnce);
+							assert(res.json.calledWith('json error'));
+						});
+					})
 				})
 			})
 			
@@ -593,7 +623,7 @@ describe('auth service', function() {
 				let user;
 
 				beforeEach(function() {
-					verifyResult = {sub: '1', prk: 'prk'};
+					verifyResult = Promise.resolve({sub: '1', prk: 'prk'});
 					users.one = sinon.stub();
 				})
 				
@@ -608,25 +638,19 @@ describe('auth service', function() {
 				describe('but no user is found', function() {
 					beforeEach(function() {
 						users.one.returns(Promise.resolve(user));
-						errorUtils.jsonError = sinon.stub()
-							.withArgs(errorCodes.accountNotFound)
-							.returns('error');
 					})
 					
 					it("should respond with a 'user not found' error", function() {
 						return run().then(() => {
+							assert(errorUtils.jsonError.calledWith(errorCodes.accountNotFound))
 							assert(res.json.called);
 							assert(res.json.calledOnce);
-							assert(res.json.calledWith('error'));
+							assert(res.json.calledWith('json error'));
 						});
 					})
 				})
 			
 				describe('and a user is found', function() {
-					beforeEach(function() {
-						errorUtils.jsonError = sinon.stub();
-					})
-
 					describe('and the password reset key matches the one in the user record', function() {
 						beforeEach(function() {
 							user = {
@@ -656,9 +680,6 @@ describe('auth service', function() {
 								pwd_reset_key: 'something else'
 							};
 							users.one.returns(Promise.resolve(user));
-							errorUtils.jsonError
-								.withArgs(errorCodes.keyMismatch)
-								.returns('error');
 						})
 						
 						it('should not add the user to the request object', function() {
@@ -669,9 +690,10 @@ describe('auth service', function() {
 					
 						it("should respond with a 'key mismatch' error", function() {
 							return run().then(() => {
+								assert(errorUtils.jsonError.calledWith(errorCodes.keyMismatch));
 								assert(res.json.called);
 								assert(res.json.calledOnce);
-								assert(res.json.calledWith('error'));
+								assert(res.json.calledWith('json error'));
 							});
 						})
 					})
@@ -680,9 +702,6 @@ describe('auth service', function() {
 						beforeEach(function() {
 							user = {};
 							users.one.returns(Promise.resolve(user));
-							errorUtils.jsonError
-								.withArgs(errorCodes.usedToken)
-								.returns('error');
 						})
 						
 						it('should not add the user to the request object', function() {
@@ -693,9 +712,10 @@ describe('auth service', function() {
 					
 						it("should respond with a 'used token' error", function() {
 							return run().then(() => {
+								assert(errorUtils.jsonError.calledWith(errorCodes.usedToken));
 								assert(res.json.called);
 								assert(res.json.calledOnce);
-								assert(res.json.calledWith('error'));
+								assert(res.json.calledWith('json error'));
 							});
 						})
 					})
@@ -705,27 +725,39 @@ describe('auth service', function() {
 		
 		describe('set new user password', function() {
 			beforeEach(function() {
-				addToRun(() => {
-					
-				});
+				addToRun(() => auth.setNewUserPassword(req, res, next));
+				req.user = { newPassword: sinon.stub() };
+				req.body = { password: 'password' };
 			})
 			
 			describe('if user.newPassword is rejected', function() {
 				beforeEach(function() {
+					req.user.newPassword.withArgs('password')
+						.returns(Promise.reject('error'));
 				})
 				
-				// it('should pass on the error', function() {
-				// 	run();
-				// })
+				it('should pass on the error', function() {
+					return run().then(() => {
+						assert(next.called)
+						assert(next.calledOnce)
+						assert(next.calledWithExactly('error'))
+					});
+				})
 			})
 			
 			describe('if user.newPassword is successful', function() {
 				beforeEach(function() {
+					req.user.newPassword.withArgs('password')
+						.returns(Promise.resolve());
 				})
 				
-				// it('should call next', function() {
-				// 	run();
-				// })
+				it('should call next', function() {
+					return run().then(() => {
+						assert(next.called)
+						assert(next.calledOnce)
+						assert(next.calledWithExactly())
+					});
+				})
 			})
 		})
   })
