@@ -21,11 +21,9 @@ describe('auth service', function() {
 		delete require.cache[require.resolve(lib)]
 	}
 	
-	beforeEach(function() {
-		// do this first to prevent a db connection from opening
+	function getRequires() {
 		config = require(local('config'));
-		config.db = null;
-		
+		config.db = null;// do this first to prevent a db connection from opening
 		passport = require('passport');
 		pjwt = require('passport-jwt');
 		passportLocal = require('passport-local');
@@ -34,9 +32,9 @@ describe('auth service', function() {
 		errorUtils = require(local('errors/errorUtils'));
 		jwt = require(local('jwt/jwt-promise'));
 		users = require(local('model/users'));
-	})
+	}
 	
-	afterEach(function(){
+	function resetRequires() {
 		resetRequire('jsonwebtoken');
 		resetRequire('passport');
 		resetRequire('passport-jwt');
@@ -49,7 +47,7 @@ describe('auth service', function() {
 		resetRequire(local('model/users'));
 		
 		resetRequire(local('auth'));
-	})
+	}
 	
   describe('require', function() {
 		let auth, spy, run, req, res, next;
@@ -63,6 +61,8 @@ describe('auth service', function() {
 		}
 		
 		beforeEach(function() {
+			resetRequires();
+			getRequires();
 			req = {
 				id: 'req',
 				body: {}
