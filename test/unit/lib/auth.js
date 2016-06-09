@@ -11,19 +11,15 @@ describe('auth service', function() {
 			config,
 			emailer,
 			errorUtils,
-			users;
+			users,
+			sandbox;
 	
 	function local(lib) {
 		return '../../../lib/' + lib;
 	}
 	
-	function resetRequire(lib) {
-		delete require.cache[require.resolve(lib)]
-	}
-	
 	function getRequires() {
 		config = require(local('config'));
-		config.db = null;// do this first to prevent a db connection from opening
 		passport = require('passport');
 		pjwt = require('passport-jwt');
 		passportLocal = require('passport-local');
@@ -32,21 +28,6 @@ describe('auth service', function() {
 		errorUtils = require(local('errors/errorUtils'));
 		jwt = require(local('jwt/jwt-promise'));
 		users = require(local('model/users'));
-	}
-	
-	function resetRequires() {
-		resetRequire('jsonwebtoken');
-		resetRequire('passport');
-		resetRequire('passport-jwt');
-		resetRequire('passport-local');
-		resetRequire('request-promise');
-		resetRequire(local('config'));
-		resetRequire(local('emailer'));
-		resetRequire(local('errors/errorUtils'));
-		resetRequire(local('jwt/jwt-promise'));
-		resetRequire(local('model/users'));
-		
-		resetRequire(local('auth'));
 	}
 	
   describe('require', function() {
@@ -60,23 +41,27 @@ describe('auth service', function() {
 			};
 		}
 		
+		afterEach(function() {
+			sandbox.restore();
+		})
+		
 		beforeEach(function() {
-			resetRequires();
+			sandbox = sinon.sandbox.create();
 			getRequires();
 			req = {
 				id: 'req',
 				body: {}
 			};
 			res = {
-				cookie: sinon.spy(),
-				json: sinon.spy(),
+				cookie: sandbox.spy(),
+				json: sandbox.spy(),
 				locals: {id:'locals'},
-				send: sinon.spy()
+				send: sandbox.spy()
 			};
-			next = sinon.spy();
+			next = sandbox.spy();
 			run = () => { return auth = require(local('auth')) }
-			passport.authenticate = sinon.stub().returns('authenticate');
-			errorUtils.jsonError = sinon.stub().returns('json error');
+			passport.authenticate = sandbox.stub().returns('authenticate');
+			errorUtils.jsonError = sandbox.stub().returns('json error');
 		})
 		
     it('should create middleware for the local auth strategy', function() {
@@ -107,10 +92,10 @@ describe('auth service', function() {
 			beforeEach(function() {
 				addToRun(() => auth.init());
 				config.jwtSecret = 'jwt_secret';
-				passportLocal.Strategy = sinon.spy();
-				pjwt.Strategy = sinon.spy();
-				passport.use = sinon.spy();
-				passport.initialize = sinon.spy();
+				passportLocal.Strategy = sandbox.spy();
+				pjwt.Strategy = sandbox.spy();
+				passport.use = sandbox.spy();
+				passport.initialize = sandbox.spy();
 			})
 			
 			it('should create a local authentication strategy', function() {
@@ -152,7 +137,7 @@ describe('auth service', function() {
 				let extractMethod = () => pjwt.Strategy.getCall(0).args[0].jwtFromRequest;
 				
 				beforeEach(function(){
-					req.get = sinon.stub().withArgs('Authorization');
+					req.get = sandbox.stub().withArgs('Authorization');
 					req.cookies = { Authorization: 'cookie' };
 				})
 				
@@ -177,10 +162,10 @@ describe('auth service', function() {
 						let onJwtAuthenticateSuccess = pjwt.Strategy.getCall(0).args[1];
 						return onJwtAuthenticateSuccess(payload, done);
 					});
-					users.one = sinon.stub();
+					users.one = sandbox.stub();
 					users.one.returns(Promise.resolve('user'));
 					payload = { sub: '1' };
-					done = sinon.spy();
+					done = sandbox.spy();
 				})
 
 				it('should get a user', function() {
@@ -209,8 +194,8 @@ describe('auth service', function() {
 						let authenticate = passportLocal.Strategy.getCall(0).args[1];
 						return authenticate(email, password, done);
 					});
-					users.one = sinon.stub().returns(Promise.resolve());
-					done = sinon.spy();
+					users.one = sandbox.stub().returns(Promise.resolve());
+					done = sandbox.spy();
 				})
 				
 				it('should get the user', function() {
@@ -234,8 +219,8 @@ describe('auth service', function() {
 					let user = {};
 					
 					beforeEach(function() {
-						users.one = sinon.stub().returns(Promise.resolve(user));
-						user.validPassword = sinon.stub().returns(false);
+						users.one = sandbox.stub().returns(Promise.resolve(user));
+						user.validPassword = sandbox.stub().returns(false);
 					});
 					
 					describe('but the password is not valid', function(){
@@ -270,10 +255,10 @@ describe('auth service', function() {
 			
 			beforeEach(function() {
 				addToRun(() => {
-					passport.authenticate = sinon.stub().returns(jwtMiddleware);
+					passport.authenticate = sandbox.stub().returns(jwtMiddleware);
 					return auth.validateToken(req, res, next);
 				});
-				jwtMiddleware = sinon.spy();
+				jwtMiddleware = sandbox.spy();
 			})
 			
 			it('should create middleware for the jwt auth strategy', function() {
@@ -327,7 +312,7 @@ describe('auth service', function() {
 			beforeEach(function() {
 				addToRun(() => auth.respondWithSessionToken(req, res));
 				req.user = user;
-				jwt.sign = sinon.stub().returns(token);
+				jwt.sign = sandbox.stub().returns(token);
 			})
 			
 			it('should create a jwt token', function() {
@@ -367,7 +352,7 @@ describe('auth service', function() {
 				addToRun(() => auth.verifyCaptcha(req, res, next));
 				config.recaptchaSecret = 'recaptchaSecret';
 				req.body.captcha = 'captcha';
-				http.post = sinon.stub().withArgs({
+				http.post = sandbox.stub().withArgs({
 					uri: 'https://www.google.com/recaptcha/api/siteverify',
 					form: {
 						secret: 'recaptchaSecret',
@@ -439,7 +424,7 @@ describe('auth service', function() {
 		describe('signup', function() {
 			beforeEach(function() {
 				addToRun(() => auth.signup(req, res, next));
-				users.create = sinon.stub().withArgs('email', 'password');
+				users.create = sandbox.stub().withArgs('email', 'password');
 				req.body.email = 'email';
 				req.body.password = 'password';
 			})
@@ -500,8 +485,8 @@ describe('auth service', function() {
 			beforeEach(function() {
 				addToRun(() => auth.sendResetPasswordLink(req, res, next));
 				req.body.email = 'email';
-				users.one = sinon.stub().withArgs('email');
-				emailer.sendResetPasswordLink = sinon.spy();
+				users.one = sandbox.stub().withArgs('email');
+				emailer.sendResetPasswordLink = sandbox.spy();
 			})
 			
 			describe('if users.one is rejected', function() {
@@ -572,7 +557,7 @@ describe('auth service', function() {
 				addToRun(() => auth.verifyPwdResetToken(req, res, next));
 				req.params = {token: 'paramsToken'};
 				req.body = {token: 'bodyToken'};
-				verifyStub = sinon.stub(jwt, 'verify', () => verifyResult);
+				verifyStub = sandbox.stub(jwt, 'verify', () => verifyResult);
 				config.jwtSecret = 'jwt_secret';
 			})
 				
@@ -654,7 +639,7 @@ describe('auth service', function() {
 
 				beforeEach(function() {
 					verifyResult = Promise.resolve({sub: '1', prk: 'prk'});
-					users.one = sinon.stub();
+					users.one = sandbox.stub();
 				})
 				
 				it('should get the user', function() {
@@ -756,7 +741,7 @@ describe('auth service', function() {
 		describe('set new user password', function() {
 			beforeEach(function() {
 				addToRun(() => auth.setNewUserPassword(req, res, next));
-				req.user = { newPassword: sinon.stub() };
+				req.user = { newPassword: sandbox.stub() };
 				req.body = { password: 'password' };
 			})
 			
