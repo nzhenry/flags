@@ -20,6 +20,7 @@ describe('auth service', function() {
 	
 	function getRequires() {
 		config = require(local('config'));
+		config.db = null;// do this first to prevent a db connection from opening
 		passport = require('passport');
 		pjwt = require('passport-jwt');
 		passportLocal = require('passport-local');
