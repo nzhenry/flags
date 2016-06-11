@@ -61,21 +61,15 @@ describe('auth service', function() {
 			};
 			next = sandbox.spy();
 			run = () => { return auth = require(local('auth')) }
-			passport.authenticate = sandbox.stub(passport, 'authenticate')
-			passport.authenticate.returns('authenticate');
-			errorUtils.jsonError = sandbox.stub();
+			passport.authenticate = sandbox.stub(passport, 'authenticate');
+			errorUtils.jsonError = sandbox.stub(errorUtils, 'jsonError');
 			errorUtils.jsonError.returns('json error');
+			users.one = sandbox.stub(users, 'one');
 		})
 		
-    it('should create middleware for the local auth strategy', function() {
-			run();
-			assert(passport.authenticate.called);
-			assert(passport.authenticate.calledOnce);
-      assert(passport.authenticate.calledWithExactly(
-				'local', {session: false}));
-    })
-		
     it('should expose middleware for the local auth strategy', function() {
+			passport.authenticate.withArgs('local', {session: false})
+				.returns('authenticate');
 			run();
 			assert.equal(auth.validateCredentials, 'authenticate');
     })
@@ -166,7 +160,6 @@ describe('auth service', function() {
 						let onJwtAuthenticateSuccess = pjwt.Strategy.getCall(0).args[1];
 						return onJwtAuthenticateSuccess(payload, done);
 					});
-					users.one = sandbox.stub();
 					users.one.returns(Promise.resolve('user'));
 					payload = { sub: '1' };
 					done = sandbox.spy();
@@ -198,7 +191,6 @@ describe('auth service', function() {
 						let authenticate = passportLocal.Strategy.getCall(0).args[1];
 						return authenticate(email, password, done);
 					});
-					users.one = sandbox.stub();
 					users.one.returns(Promise.resolve());
 					done = sandbox.spy();
 				})
@@ -224,7 +216,6 @@ describe('auth service', function() {
 					let user = {};
 					
 					beforeEach(function() {
-						users.one = sandbox.stub();
 						users.one.returns(Promise.resolve(user));
 						user.validPassword = sandbox.stub();
 						user.validPassword.returns(false);
@@ -319,7 +310,7 @@ describe('auth service', function() {
 			beforeEach(function() {
 				addToRun(() => auth.respondWithSessionToken(req, res));
 				req.user = user;
-				jwt.sign = sandbox.stub();
+				jwt.sign = sandbox.stub(jwt, 'sign');
 				jwt.sign.returns(token);
 			})
 			
@@ -366,7 +357,7 @@ describe('auth service', function() {
 				addToRun(() => auth.verifyCaptcha(req, res, next));
 				config.recaptchaSecret = 'recaptchaSecret';
 				req.body.captcha = 'captcha';
-				http.post = sandbox.stub();
+				http.post = sandbox.stub(http, 'post');
 			})
 			
 			describe('if http.post returns an error', function(){
@@ -433,7 +424,7 @@ describe('auth service', function() {
 			let email = 'email', password = 'password';
 			beforeEach(function() {
 				addToRun(() => auth.signup(req, res, next));
-				users.create = sandbox.stub();
+				users.create = sandbox.stub(users, 'create');
 				req.body.email = 'email';
 				req.body.password = 'password';
 			})
@@ -498,7 +489,6 @@ describe('auth service', function() {
 			beforeEach(function() {
 				addToRun(() => auth.sendResetPasswordLink(req, res, next));
 				req.body.email = 'email';
-				users.one = sandbox.stub();
 				emailer.sendResetPasswordLink = sandbox.spy();
 			})
 			
@@ -652,7 +642,6 @@ describe('auth service', function() {
 
 				beforeEach(function() {
 					verifyResult = Promise.resolve({sub: '1', prk: 'prk'});
-					users.one = sandbox.stub();
 				})
 				
 				it('should get the user', function() {
