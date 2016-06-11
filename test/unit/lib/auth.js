@@ -177,19 +177,12 @@ describe('auth service', function() {
 						let authenticate = factory.passportLocalStrategy.getCall(0).args[1];
 						return authenticate(email, password, done);
 					});
-					users.one.returns(Promise.resolve());
 					done = sandbox.spy();
-				})
-				
-				it('should get the user', function() {
-					run();
-					assert(users.one.called);
-					assert(users.one.calledOnce);
-					assert(users.one.calledWithExactly(email));
 				})
 				
 				describe('if no user is found', function(){
 					it('should fail to authenticate', function() {
+						users.one.returns(Promise.resolve());
 						return run().then(() => {
 							assert(done.called);
 							assert(done.calledOnce);
