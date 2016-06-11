@@ -3,7 +3,7 @@ let assert = chai.assert;
 let sinon = require('sinon');
 
 describe('db', function() {
-	let dbFactory,
+	let factory,
 			config;
 	
 	function local(lib) {
@@ -16,11 +16,11 @@ describe('db', function() {
 
 	function getRequires() {
 		config = require(local('config'));
-		dbFactory = require(local('dbFactory'));
+		factory = require(local('factory'));
 	}
 	
 	function resetRequires() {
-		resetRequire(local('dbFactory'));
+		resetRequire(local('factory'));
 		resetRequire(local('config'));
 		resetRequire(local('db'));
 	}
@@ -42,14 +42,14 @@ describe('db', function() {
 			config.db = 'dbConfig';
 			run = () => { return db = require(local('db')) }
 			dbFactoryResult = {db:'db'};
-			dbFactory.get = sinon.stub().returns(dbFactoryResult);
+			factory.knex = sinon.stub().returns(dbFactoryResult);
 		})
 		
     it('should create a db connection', function() {
 			run();
-			assert(dbFactory.get.called);
-			assert(dbFactory.get.called);
-			assert(dbFactory.get.calledWithExactly({
+			assert(factory.knex.called);
+			assert(factory.knex.called);
+			assert(factory.knex.calledWithExactly({
 				client: 'pg',
 				connection: 'dbConfig'
 			}));

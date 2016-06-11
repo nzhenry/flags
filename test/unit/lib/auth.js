@@ -5,12 +5,11 @@ let sinon = require('sinon');
 describe('auth service', function() {
 	let jwt,
 			passport,
-			pjwt,
-			passportLocal,
 			http,
 			config,
 			emailer,
 			errorUtils,
+			factory,
 			users,
 			sandbox;
 	
@@ -21,12 +20,11 @@ describe('auth service', function() {
 	function getRequires() {
 		config = require(local('config'));
 		config.db = null;// do this first to prevent a db connection from opening
-		passport = require('passport');
-		pjwt = require('passport-jwt');
-		passportLocal = require('passport-local');
+		passport = require('passport');;
 		http = require('request-promise');
 		emailer = require(local('emailer'));
 		errorUtils = require(local('errors/errorUtils'));
+		factory = require(local('factory'))
 		jwt = require(local('jwt/jwt-promise'));
 		users = require(local('model/users'));
 	}
@@ -65,13 +63,17 @@ describe('auth service', function() {
 			errorUtils.jsonError = sandbox.stub(errorUtils, 'jsonError');
 			errorUtils.jsonError.returns('json error');
 			users.one = sandbox.stub(users, 'one');
+			factory.passportLocalStrategy = sandbox.stub(factory, 'passportLocalStrategy');
+			factory.passportJwtStrategy = sandbox.stub(factory, 'passportJwtStrategy');
 		})
 		
     it('should expose middleware for the local auth strategy', function() {
-			passport.authenticate.withArgs('local', {session: false})
-				.returns('authenticate');
+			let authenticateResult = 'authenticateResult-4674'
+			passport.authenticate
+				.withArgs('local', {session: false})
+				.returns(authenticateResult);
 			run();
-			assert.equal(auth.validateCredentials, 'authenticate');
+			assert.equal(auth.validateCredentials, authenticateResult);
     })
 	
 		describe('init', function() {
@@ -89,39 +91,31 @@ describe('auth service', function() {
 			beforeEach(function() {
 				addToRun(() => auth.init());
 				config.jwtSecret = 'jwt_secret';
-				passportLocal.Strategy = sandbox.spy();
-				pjwt.Strategy = sandbox.spy();
 				passport.use = sandbox.spy();
 				passport.initialize = sandbox.spy();
 			})
 			
-			it('should create a local authentication strategy', function() {
-				run();
-				assert(passportLocal.Strategy.called);
-				assert(passportLocal.Strategy.calledOnce);
-				assert(passportLocal.Strategy.calledWithExactly(
-					{
-						usernameField: 'email',
-						passwordField: 'password'
-					},
-					sinon.match.func));
-			})
-			
 			it('should configure the app to use the local authentication strategy', function() {
+				let passportLocalStrategy = 'passportLocalStrategy-987';
+				factory.passportLocalStrategy
+					.withArgs(
+						{
+							usernameField: 'email',
+							passwordField: 'password'
+						},
+						sinon.match.func)
+					.returns(passportLocalStrategy);
 				run();
-				assert(passport.use.calledWithExactly(new passportLocal.Strategy()));
-			})
-			
-			it('should create a jwt authentication strategy', function() {
-				run();
-				assert(pjwt.Strategy.called);
-				assert(pjwt.Strategy.calledOnce);
-				assert(pjwt.Strategy.calledWithExactly(opts, sinon.match.func));
+				assert(passport.use.calledWithExactly(passportLocalStrategy));
 			})
 			
 			it('should configure the app to use the jwt authentication strategy', function() {
+				let passportJwtStrategy = 'passportJwtStrategy-234';
+				factory.passportJwtStrategy
+					.withArgs(opts, sinon.match.func)
+					.returns(passportJwtStrategy);
 				run();
-				assert(passport.use.calledWithExactly(new pjwt.Strategy()));
+				assert(passport.use.calledWithExactly(passportJwtStrategy));
 			})
 			
 			it('should configure the app to use the jwt authentication strategy', function() {
@@ -132,7 +126,7 @@ describe('auth service', function() {
 		
 			describe('jwt extract method', function() {
 				let authorization = 'Authorization';
-				let extractMethod = () => pjwt.Strategy.getCall(0).args[0].jwtFromRequest;
+				let extractMethod = () => factory.passportJwtStrategy.getCall(0).args[0].jwtFromRequest;
 				
 				beforeEach(function(){
 					req.get = sandbox.stub();
@@ -157,7 +151,7 @@ describe('auth service', function() {
 
 				beforeEach(function() {
 					addToRun(() => {
-						let onJwtAuthenticateSuccess = pjwt.Strategy.getCall(0).args[1];
+						let onJwtAuthenticateSuccess = factory.passportJwtStrategy.getCall(0).args[1];
 						return onJwtAuthenticateSuccess(payload, done);
 					});
 					users.one.returns(Promise.resolve('user'));
@@ -188,7 +182,7 @@ describe('auth service', function() {
 				
 				beforeEach(function() {
 					addToRun(() => {
-						let authenticate = passportLocal.Strategy.getCall(0).args[1];
+						let authenticate = factory.passportLocalStrategy.getCall(0).args[1];
 						return authenticate(email, password, done);
 					});
 					users.one.returns(Promise.resolve());
