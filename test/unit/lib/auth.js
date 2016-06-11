@@ -77,22 +77,11 @@ describe('auth service', function() {
     })
 	
 		describe('init', function() {
-			let opts;
-			
-			before(function() {
-				opts = {
-					jwtFromRequest: sinon.match.func,
-					secretOrKey: 'jwt_secret',
-					algorithms: ['HS256'],
-					ignoreExpiration: true
-				};
-			})
-			
 			beforeEach(function() {
 				addToRun(() => auth.init());
 				config.jwtSecret = 'jwt_secret';
 				passport.use = sandbox.spy();
-				passport.initialize = sandbox.spy();
+				passport.initialize = sandbox.stub(passport, 'initialize');
 			})
 			
 			it('should configure the app to use the local authentication strategy', function() {
@@ -112,14 +101,23 @@ describe('auth service', function() {
 			it('should configure the app to use the jwt authentication strategy', function() {
 				let passportJwtStrategy = 'passportJwtStrategy-234';
 				factory.passportJwtStrategy
-					.withArgs(opts, sinon.match.func)
+					.withArgs(
+						{
+							jwtFromRequest: sinon.match.func,
+							secretOrKey: 'jwt_secret',
+							algorithms: ['HS256'],
+							ignoreExpiration: true
+						},
+						sinon.match.func)
 					.returns(passportJwtStrategy);
 				run();
 				assert(passport.use.calledWithExactly(passportJwtStrategy));
 			})
 			
-			it('should configure the app to use the jwt authentication strategy', function() {
-				run();
+			it('should initialize passport', function() {
+				let initializeResult = 'initialize-393';
+				passport.initialize.withArgs().returns(initializeResult);
+				assert.equal(run(), initializeResult);
 				assert(passport.initialize.called);
 				assert(passport.initialize.calledOnce);
 			})
