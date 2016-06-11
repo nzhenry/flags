@@ -124,23 +124,24 @@ describe('auth service', function() {
 		
 			describe('jwt extract method', function() {
 				let authorization = 'Authorization';
-				let extractMethod = () => factory.passportJwtStrategy.getCall(0).args[0].jwtFromRequest;
 				
 				beforeEach(function(){
+					addToRun(() => {
+						let extractMethod = factory.passportJwtStrategy.getCall(0).args[0].jwtFromRequest;
+						return extractMethod(req);
+					});
 					req.get = sandbox.stub();
 					req.cookies = { Authorization: 'cookie' };
 				})
 				
 				it("should return the 'Authorization' header if present", function() {
-					run();
 					req.get.withArgs(authorization).returns('header');
-					assert.equal(extractMethod()(req), 'header');
+					assert.equal(run(), 'header');
 				})
 				
 				it("should return the 'Authorization' cookie if the 'Authorization' header is not present", function() {
-					run();
 					req.get.withArgs(authorization).returns(null);
-					assert.equal(extractMethod()(req), 'cookie');
+					assert.equal(run(), 'cookie');
 				})
 			})
 		
