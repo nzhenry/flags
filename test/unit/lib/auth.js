@@ -153,19 +153,12 @@ describe('auth service', function() {
 						let onJwtAuthenticateSuccess = factory.passportJwtStrategy.getCall(0).args[1];
 						return onJwtAuthenticateSuccess(payload, done);
 					});
-					users.one.returns(Promise.resolve('user'));
 					payload = { sub: '1' };
 					done = sandbox.spy();
 				})
 
-				it('should get a user', function() {
-					run();
-					assert(users.one.called);
-					assert(users.one.calledOnce);
-					assert(users.one.calledWithExactly(1));
-				})
-
 				it('should invoke the callback with the user', function() {
+					users.one.withArgs(1).returns(Promise.resolve('user'));
 					return run().then(() => {
 						assert(done.called);
 						assert(done.calledOnce);
