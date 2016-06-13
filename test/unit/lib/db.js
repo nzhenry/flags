@@ -1,29 +1,32 @@
+'use strict'
+
 let chai = require('chai');
 let assert = chai.assert;
 let sinon = require('sinon');
 
 describe('db', function() {
 	let factory,
-			config;
+			config,
+			sandbox;
 	
 	function local(lib) {
 		return '../../../lib/' + lib;
 	}
-	
-	function resetRequire(lib) {
-		delete require.cache[require.resolve(lib)]
-	}
 
 	function getRequires() {
 		config = require(local('config'));
+		config.db = 'dbConfig';
 		factory = require(local('factory'));
 	}
-	
-	function resetRequires() {
-		resetRequire(local('factory'));
-		resetRequire(local('config'));
-		resetRequire(local('db'));
-	}
+		
+	beforeEach(function() {
+		sandbox = sinon.sandbox.create();
+		getRequires();
+	})
+		
+	afterEach(function() {
+		sandbox.restore();
+	})
 	
   describe('require', function() {
 		let db, run, dbFactoryResult;
@@ -37,22 +40,43 @@ describe('db', function() {
 		}
 		
 		beforeEach(function() {
-			resetRequires();
-			getRequires();
-			config.db = 'dbConfig';
-			run = () => { return db = require(local('db')) }
+			run = () => {
+				delete require.cache[require.resolve(local('db'))];
+				return require(local('db'));
+			}
 			dbFactoryResult = {db:'db'};
-			factory.knex = sinon.stub().returns(dbFactoryResult);
+			factory.knex = sandbox.stub(factory, 'knex');
 		})
 		
     it('should create a db connection', function() {
-			run();
-			assert(factory.knex.called);
-			assert(factory.knex.called);
-			assert(factory.knex.calledWithExactly({
-				client: 'pg',
-				connection: 'dbConfig'
-			}));
+			factory.knex
+				.withArgs({
+						client: 'pg',
+						connection: 'dbConfig'
+					})
+				.returns(dbFactoryResult);
+			assert.equal(run(), dbFactoryResult);
     })
+
+		describe('upsert', function() {
+			let tableName = 'tableName',
+				conflictTarget = 'conflictTarget',
+				values = 'values';
+		
+			beforeEach(function() {
+				sandbox.restore();
+				config.db = null;
+			})
+			
+			it('converts a string for conflictTarget into an array', function() {
+				let db = run();
+				let spy = sandbox.spy(db, 'upsert');
+				db.upsert(tableName, conflictTarget, values);
+				assert(spy.called);
+				assert(spy.calledTwice);
+				assert(spy.firstCall.calledWithExactly(tableName, conflictTarget, values));
+				assert(spy.secondCall.calledWithExactly(tableName, [conflictTarget], values));
+			})
+		})
   })
 })
