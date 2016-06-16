@@ -9,7 +9,6 @@ angular.module('flagsApp').controller('setNewPasswordModalController', function 
   blockPromise.then(function() { return verifyPromise })
       .catch(function(err) {
         $scope.faulted = true;
-        console.log();
         if(err.code == errorCodes.expiredToken) {
           $scope.alerts.push({type: 'danger', messages: [
             'That link is no longer valid.'],
